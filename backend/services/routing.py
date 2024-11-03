@@ -1,0 +1,1 @@
+# Lógica para geração de rotas
