@@ -1,10 +1,10 @@
 from fastapi import FastAPI
-from app import views  # Importa as rotas definidas na aplicação
+from routes import ahahahha
 
 app = FastAPI()
 
 # Inclui as rotas
-app.include_router(views.router)
+app.include_router(ahahahha.router)
 
 @app.get("/health")
 async def health_check():
@@ -13,3 +13,4 @@ async def health_check():
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
