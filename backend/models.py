@@ -35,6 +35,7 @@ class Vehicle(Base):
     placa = Column(String, unique=True, index=True)
     modelo = Column(String)
     capacidade = Column(Integer)
+    fk_id_localizacao = Column(Integer, ForeignKey="LocalizacaoVeiculo.id")
     is_available = Column(Boolean, default=True)
 
     deliveries = relationship("Entrega", back_populates="Veiculo")
@@ -49,7 +50,8 @@ class Driver(Base):
     end_rua = Column(String)
     end_bairro = Column(String)
     end_numero = Column(Integer)
-    fk_id_usuario = Column(Integer, foreign_key= "Usuario.id")
+    fk_id_usuario = Column(Integer, ForeignKey= "Usuario.id")
+    fk_id_veiculo = Column(Integer, ForeignKey="Veiculo.id")
     
     # Relacionamento com entregas
     deliveries = relationship("Entrega", back_populates="Motorista")
@@ -70,7 +72,7 @@ class DistributionPoint(Base):
 
     
 class VehicleLocation(Base):
-    __tablename__ = "Localizacao_Veiculo"
+    __tablename__ = "LocalizacaoVeiculo"
     
     id = Column(Integer, primary_key=True, index=True)
     fk_id_veiculo_ocupado = Column(Integer, ForeignKey="Contrato.id")
@@ -88,20 +90,21 @@ class Route(Base):
     distancia_km = Column(Float)
     tempo_estimado = Column(Integer)  
     fk_id_entrega = Column(Integer, ForeignKey="Entrega.id")
-    
 
+    route = relationship("Entrega")
+    
 class Delivery(Base):
     __tablename__ = "Entrega"
     
     id = Column(Integer, primary_key=True, index=True)
-    fk_id_veiculo_ocupado = Column(Integer, ForeignKey="Contrato.id")
+    fk_id_veiculo = Column(Integer, ForeignKey="Veiculo.id")
     fk_id_produto = Column(Integer, ForeignKey="Produto.id")
     fk_id_ponto_entrega = Column(Integer, ForeignKey="PontoDistribuicao.id")
     status = Column(String, default="pending")  # Exemplo: "pending", "in_progress", "delivered"
+    fk_id_ponto_entrega = Column(Integer, ForeignKey="PontoDistribuicao.id")
+    is_delivered = Column(Boolean, default="False")
     
     # Relacionamentos
-    vehicle = relationship("Vehicle", back_populates="deliveries")
-    driver = relationship("Driver", back_populates="deliveries")
-    product = relationship("Product")
-    distribution_point = relationship("DistributionPoint")
-    route = relationship("Route")
+    vehicle = relationship("Contrato", back_populates="Entrega")
+    product = relationship("Produto")
+    distribution_point = relationship("PontoDistribuicao")
