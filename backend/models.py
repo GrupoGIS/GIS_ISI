@@ -2,6 +2,18 @@
 from sqlalchemy import Column, Integer, String
 from .database import Base
 
+class User(Base):
+    __tablename__ = "Usuario"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    is_client = Column(Boolean)
+    is_driver = Column(Boolean)
+    is_employee = Column(Boolean)
+    email = Column(String)
+    password_hash = Column(String)
+    salt = Column(String)
+
+
 class Client(Base):
     __tablename__ = "Cliente"
     
@@ -108,3 +120,18 @@ class Delivery(Base):
     vehicle = relationship("Contrato", back_populates="Entrega")
     product = relationship("Produto")
     distribution_point = relationship("PontoDistribuicao")
+
+
+class Employee(Base):
+    __tablename__ = "Funcionario"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, index=True)
+    end_rua = Column(String)
+    end_bairro = Column(String)
+    end_numero = Column(Integer)
+    telefone = Column(Integer)
+    area = Column(String)
+    fk_id_usuario = Column(Integer, foreign_key= "Usuario.id")
+
+
