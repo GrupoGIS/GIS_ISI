@@ -1,6 +1,6 @@
 # Modelos de dados (SQLAlchemy)
-from sqlalchemy import Column, Integer, String
-from .database import Base
+from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey
+from database import Base
 
 class User(Base):
     __tablename__ = "Usuario"
@@ -23,9 +23,8 @@ class Client(Base):
     end_bairro = Column(String)
     end_numero = Column(Integer)
     telefone = Column(Integer)
-    fk_id_usuario = Column(Integer, foreign_key= "Usuario.id")
+    fk_id_usuario = Column(Integer, ForeignKey("Usuario.id"))
 
-    user = relationship("Usuario", back_populates="Clientes")
 
 class Product(Base):
     __tablename__ = "Produto"
@@ -35,9 +34,8 @@ class Product(Base):
     descricao = Column(String)
     preco = Column(Integer)
     quantidade_estoque = Column(Integer)
-    fk_id_cliente = Column(Integer, foreign_key = "Cliente.id")
+    fk_id_cliente = Column(Integer, ForeignKey("Cliente.id"))
 
-    product = relationship("Cliente", back_populates="Produto")
 
     
 class Vehicle(Base):
@@ -47,10 +45,9 @@ class Vehicle(Base):
     placa = Column(String, unique=True, index=True)
     modelo = Column(String)
     capacidade = Column(Integer)
-    fk_id_localizacao = Column(Integer, ForeignKey="LocalizacaoVeiculo.id")
+    fk_id_localizacao = Column(Integer, ForeignKey("LocalizacaoVeiculo.id"))
     is_available = Column(Boolean, default=True)
 
-    deliveries = relationship("Entrega", back_populates="Veiculo")
     
 class Driver(Base):
     __tablename__ = "Motorista"
@@ -62,13 +59,9 @@ class Driver(Base):
     end_rua = Column(String)
     end_bairro = Column(String)
     end_numero = Column(Integer)
-    fk_id_usuario = Column(Integer, ForeignKey= "Usuario.id")
-    fk_id_veiculo = Column(Integer, ForeignKey="Veiculo.id")
+    fk_id_usuario = Column(Integer, ForeignKey("Usuario.id"))
+    fk_id_veiculo = Column(Integer, ForeignKey("Veiculo.id"))
     
-    # Relacionamento com entregas
-    deliveries = relationship("Entrega", back_populates="Motorista")
-    driver = relationship("Usuario", back_populates="Motorista")
-
 
 class DistributionPoint(Base):
     __tablename__ = "PontoDistribuicao"
@@ -80,14 +73,13 @@ class DistributionPoint(Base):
     end_numero = Column(Integer)
     tipo = Column(String)
 
-    distpoint = relationship("Entrega", back_populates="PontoDistribuicao") 
 
     
 class VehicleLocation(Base):
     __tablename__ = "LocalizacaoVeiculo"
     
     id = Column(Integer, primary_key=True, index=True)
-    fk_id_veiculo_ocupado = Column(Integer, ForeignKey="Contrato.id")
+    fk_id_veiculo_ocupado = Column(Integer, ForeignKey("Contrato.id"))
     latitude = Column(Float)
     longitude = Column(Float)
     data_hora = Column(Date)
@@ -101,25 +93,20 @@ class Route(Base):
     destino = Column(Float)
     distancia_km = Column(Float)
     tempo_estimado = Column(Integer)  
-    fk_id_entrega = Column(Integer, ForeignKey="Entrega.id")
+    fk_id_entrega = Column(Integer, ForeignKey("Entrega.id"))
 
-    route = relationship("Entrega")
     
 class Delivery(Base):
     __tablename__ = "Entrega"
     
     id = Column(Integer, primary_key=True, index=True)
-    fk_id_veiculo = Column(Integer, ForeignKey="Veiculo.id")
-    fk_id_produto = Column(Integer, ForeignKey="Produto.id")
-    fk_id_ponto_entrega = Column(Integer, ForeignKey="PontoDistribuicao.id")
+    fk_id_veiculo = Column(Integer, ForeignKey("Veiculo.id"))
+    fk_id_produto = Column(Integer, ForeignKey("Produto.id"))
+    fk_id_ponto_entrega = Column(Integer, ForeignKey("PontoDistribuicao.id"))
     status = Column(String, default="pending")  # Exemplo: "pending", "in_progress", "delivered"
-    fk_id_ponto_entrega = Column(Integer, ForeignKey="PontoDistribuicao.id")
+    fk_id_ponto_entrega = Column(Integer, ForeignKey("PontoDistribuicao.id"))
     is_delivered = Column(Boolean, default="False")
     
-    # Relacionamentos
-    vehicle = relationship("Contrato", back_populates="Entrega")
-    product = relationship("Produto")
-    distribution_point = relationship("PontoDistribuicao")
 
 
 class Employee(Base):
@@ -132,6 +119,6 @@ class Employee(Base):
     end_numero = Column(Integer)
     telefone = Column(Integer)
     area = Column(String)
-    fk_id_usuario = Column(Integer, foreign_key= "Usuario.id")
+    fk_id_usuario = Column(Integer, ForeignKey("Usuario.id"))
 
 

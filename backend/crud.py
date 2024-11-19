@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
-from . import models, schemas
+import sys
+sys.path.append("backend")
+import models, schemas
 
 # 1. Cadastro de Clientes
 def create_client(db: Session, client: schemas.ClientCreate):
