@@ -1,30 +1,33 @@
 from fastapi import FastAPI
-from database import engine, Base
+from sqlalchemy.ext.asyncio import AsyncSession
+from database import engine, Base, async_sessionmaker
 from routers import clients
-from sqlalchemy.orm import Session
-from services.database import SessionLocal
+import uvicorn
 
-Base.metadata.create_all(bind=engine)
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 app = FastAPI()
 
 app.include_router(clients.router)
 
+@app.on_event("startup")
+async def startup_event():
+    await create_tables()
+
 @app.get("/")
 async def root():
     return {"message": "Backend is running!"}
 
-
 @app.get("/healthcheck")
 async def healthcheck():
     try:
-        db: Session = SessionLocal()
-        db.execute("SELECT 1")  
+        async with async_sessionmaker() as session:
+            await session.execute("SELECT 1")  
         return {"status": "ok", "database": "connected"}
     except Exception as e:
         return {"status": "error", "database": str(e)}
-
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

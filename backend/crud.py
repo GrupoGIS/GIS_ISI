@@ -1,109 +1,125 @@
-from sqlalchemy.orm import Session
-import sys
-sys.path.append("backend")
-import models, schemas
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+import models
+import schemas
 
 # 1. Cadastro de Clientes
-def create_client(db: Session, client: schemas.ClientCreate):
+async def create_client(db: AsyncSession, client: schemas.ClientCreate):
     db_client = models.Cliente(**client.dict())
     db.add(db_client)
-    db.commit()
-    db.refresh(db_client)
+    await db.commit()
+    await db.refresh(db_client)
     return db_client
 
-def get_clients(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.Cliente).offset(skip).limit(limit).all()
+async def get_clients(db: AsyncSession, skip: int = 0, limit: int = 10):
+    result = await db.execute(select(models.Cliente).offset(skip).limit(limit))
+    return result.scalars().all()
 
 # 2. Cadastro de Produtos
-def create_product(db: Session, product: schemas.ProductCreate):
+async def create_product(db: AsyncSession, product: schemas.ProductCreate):
     db_product = models.Produto(**product.dict())
     db.add(db_product)
-    db.commit()
-    db.refresh(db_product)
+    await db.commit()
+    await db.refresh(db_product)
     return db_product
 
-def get_products(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.Produto).offset(skip).limit(limit).all()
+async def get_products(db: AsyncSession, skip: int = 0, limit: int = 10):
+    result = await db.execute(select(models.Produto).offset(skip).limit(limit))
+    return result.scalars().all()
 
 # 3. Cadastro de Veículos
-def create_vehicle(db: Session, vehicle: schemas.VehicleCreate):
+async def create_vehicle(db: AsyncSession, vehicle: schemas.VehicleCreate):
     db_vehicle = models.Veiculo(**vehicle.dict())
     db.add(db_vehicle)
-    db.commit()
-    db.refresh(db_vehicle)
+    await db.commit()
+    await db.refresh(db_vehicle)
     return db_vehicle
 
-def get_vehicles(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.Veiculo).offset(skip).limit(limit).all()
+async def get_vehicles(db: AsyncSession, skip: int = 0, limit: int = 10):
+    result = await db.execute(select(models.Veiculo).offset(skip).limit(limit))
+    return result.scalars().all()
 
 # Cadastro de Motoristas
-def create_driver(db: Session, driver: schemas.DriverCreate):
+async def create_driver(db: AsyncSession, driver: schemas.DriverCreate):
     db_driver = models.Motorista(**driver.dict())
     db.add(db_driver)
-    db.commit()
-    db.refresh(db_driver)
+    await db.commit()
+    await db.refresh(db_driver)
     return db_driver
 
-def get_drivers(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.Motorista).offset(skip).limit(limit).all()
+async def get_drivers(db: AsyncSession, skip: int = 0, limit: int = 10):
+    result = await db.execute(select(models.Motorista).offset(skip).limit(limit))
+    return result.scalars().all()
 
 # 4. Cadastro de Pontos de Distribuição
-def create_distribution_point(db: Session, point: schemas.DistributionPointCreate):
+async def create_distribution_point(db: AsyncSession, point: schemas.DistributionPointCreate):
     db_point = models.PontoDistribuicao(**point.dict())
     db.add(db_point)
-    db.commit()
-    db.refresh(db_point)
+    await db.commit()
+    await db.refresh(db_point)
     return db_point
 
-def get_distribution_points(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.PontoDistribuicao).offset(skip).limit(limit).all()
+async def get_distribution_points(db: AsyncSession, skip: int = 0, limit: int = 10):
+    result = await db.execute(select(models.PontoDistribuicao).offset(skip).limit(limit))
+    return result.scalars().all()
 
 # 5. Importação de Dados de Localização dos Veículos
-def create_vehicle_location(db: Session, location: schemas.VehicleLocationCreate):
+async def create_vehicle_location(db: AsyncSession, location: schemas.VehicleLocationCreate):
     db_location = models.LocalizacaoVeiculo(**location.dict())
     db.add(db_location)
-    db.commit()
-    db.refresh(db_location)
+    await db.commit()
+    await db.refresh(db_location)
     return db_location
 
-def get_vehicle_locations(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.LocalizacaoVeiculo).offset(skip).limit(limit).all()
+async def get_vehicle_locations(db: AsyncSession, skip: int = 0, limit: int = 10):
+    result = await db.execute(select(models.LocalizacaoVeiculo).offset(skip).limit(limit))
+    return result.scalars().all()
 
 # 6. Seleção de Melhor Veículo para Realizar uma Entrega
-def select_best_vehicle_for_delivery(db: Session, delivery_id: int):
-    available_vehicles = db.query(models.Veiculo).filter_by(is_available=True).all()
+async def select_best_vehicle_for_delivery(db: AsyncSession, delivery_id: int):
+    result = await db.execute(select(models.Veiculo).filter_by(is_available=True))
+    available_vehicles = result.scalars().all()
     best_vehicle = max(available_vehicles, key=lambda v: v.capacidade, default=None)
     if best_vehicle:
         best_vehicle.is_available = False
-        db.commit()
+        await db.commit()
     return best_vehicle
 
 # 7. Geração de Rotas de Entrega
-def create_route(db: Session, route: schemas.RouteCreate):
+async def create_route(db: AsyncSession, route: schemas.RouteCreate):
     db_route = models.Rota(**route.dict())
     db.add(db_route)
-    db.commit()
-    db.refresh(db_route)
+    await db.commit()
+    await db.refresh(db_route)
     return db_route
 
-def get_routes(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.Rota).offset(skip).limit(limit).all()
+async def get_routes(db: AsyncSession, skip: int = 0, limit: int = 10):
+    result = await db.execute(select(models.Rota).offset(skip).limit(limit))
+    return result.scalars().all()
 
-# 8. Visualização Geográfica de Clientes, Pontos de Distribuição, Veículos e Rotas
-def get_geographic_data(db: Session):
-    clients = db.query(models.Cliente).all()
-    distribution_points = db.query(models.PontoDistribuicao).all()
-    vehicles = db.query(models.Veiculo).all()
-    routes = db.query(models.Rota).all()
-    return {"Clientes": clients, "Pontos_Distribuicao": distribution_points, "Veiculos": vehicles, "Rotas": routes}
+# 8. Visualização Geográfica de Dados
+async def get_geographic_data(db: AsyncSession):
+    clients = await db.execute(select(models.Cliente))
+    distribution_points = await db.execute(select(models.PontoDistribuicao))
+    vehicles = await db.execute(select(models.Veiculo))
+    routes = await db.execute(select(models.Rota))
+    return {
+        "Clientes": clients.scalars().all(),
+        "Pontos_Distribuicao": distribution_points.scalars().all(),
+        "Veiculos": vehicles.scalars().all(),
+        "Rotas": routes.scalars().all(),
+    }
 
 # 9. Relatório de Entregas por Veículo e por Período
-def get_deliveries_report(db: Session, vehicle_id: int):
-    return db.query(models.Delivery).filter(
-        models.Entrega.fk_id_veiculo == vehicle_id
-    ).all()
+async def get_deliveries_report(db: AsyncSession, vehicle_id: int):
+    result = await db.execute(
+        select(models.Entrega).filter(models.Entrega.fk_id_veiculo == vehicle_id)
+    )
+    return result.scalars().all()
 
 # 10. Visualização Geográfica dos Produtos Entregues
-def get_delivered_products_map_data(db: Session):
-    delivered_products = db.query(models.Entrega).filter(models.Entrega.is_delivered == 'True').all()
-    return delivered_products
+async def get_delivered_products_map_data(db: AsyncSession):
+    result = await db.execute(
+        select(models.Entrega).filter(models.Entrega.is_delivered == True)
+    )
+    return result.scalars().all()

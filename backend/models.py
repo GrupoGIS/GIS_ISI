@@ -79,7 +79,7 @@ class VehicleLocation(Base):
     __tablename__ = "LocalizacaoVeiculo"
     
     id = Column(Integer, primary_key=True, index=True)
-    fk_id_veiculo_ocupado = Column(Integer, ForeignKey("Contrato.id"))
+    fk_id_veiculo_ocupado = Column(Integer, ForeignKey("Veiculo.id"))
     latitude = Column(Float)
     longitude = Column(Float)
     data_hora = Column(Date)
