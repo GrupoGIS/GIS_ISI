@@ -1,6 +1,7 @@
 # Modelos de dados (SQLAlchemy)
 from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey
 from database import Base
+from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "Usuario"
@@ -13,6 +14,9 @@ class User(Base):
     password_hash = Column(String)
     salt = Column(String)
 
+    clients = relationship("Cliente", back_populates="Usuario")
+    drivers = relationship("Motorista", back_populates="Usuario")
+    employees = relationship("Funcionario", back_populates="Usuario")
 
 class Client(Base):
     __tablename__ = "Cliente"
@@ -25,6 +29,8 @@ class Client(Base):
     telefone = Column(Integer)
     fk_id_usuario = Column(Integer, ForeignKey("Usuario.id"))
 
+    user = relationship("Usuario", back_populates="Cliente")
+    products = relationship("Produto", back_populates="Cliente")
 
 class Product(Base):
     __tablename__ = "Produto"
@@ -36,7 +42,8 @@ class Product(Base):
     quantidade_estoque = Column(Integer)
     fk_id_cliente = Column(Integer, ForeignKey("Cliente.id"))
 
-
+    client = relationship("Cliente", back_populates="Produto")
+    deliveries = relationship("Entrega", back_populates="Produto")
     
 class Vehicle(Base):
     __tablename__ = "Veiculo"
@@ -48,6 +55,9 @@ class Vehicle(Base):
     fk_id_localizacao = Column(Integer, ForeignKey("LocalizacaoVeiculo.id"))
     is_available = Column(Boolean, default=True)
 
+    drivers = relationship("Motorista", back_populates="Veiculo")
+    location = relationship("LocalizacaoVeiculo", back_populates="Veiculo")
+    deliveries = relationship("Entrega", back_populates="Veiculo")
     
 class Driver(Base):
     __tablename__ = "Motorista"
@@ -62,6 +72,8 @@ class Driver(Base):
     fk_id_usuario = Column(Integer, ForeignKey("Usuario.id"))
     fk_id_veiculo = Column(Integer, ForeignKey("Veiculo.id"))
     
+    user = relationship("Usuario", back_populates="Motorista")
+    vehicle = relationship("Veiculo", back_populates="Motorista")
 
 class DistributionPoint(Base):
     __tablename__ = "PontoDistribuicao"
@@ -73,7 +85,7 @@ class DistributionPoint(Base):
     end_numero = Column(Integer)
     tipo = Column(String)
 
-
+    deliveries = relationship("Entrega", back_populates="PontoDistribuicao")
     
 class VehicleLocation(Base):
     __tablename__ = "LocalizacaoVeiculo"
@@ -84,6 +96,7 @@ class VehicleLocation(Base):
     longitude = Column(Float)
     data_hora = Column(Date)
     
+    vehicle = relationship("Veiculo", back_populates="LocalizacaoVeiculo")
 
 class Route(Base):
     __tablename__ = "Rota"
@@ -95,6 +108,7 @@ class Route(Base):
     tempo_estimado = Column(Integer)  
     fk_id_entrega = Column(Integer, ForeignKey("Entrega.id"))
 
+    delivery = relationship("Entrega", back_populates="Rota")
     
 class Delivery(Base):
     __tablename__ = "Entrega"
@@ -107,6 +121,10 @@ class Delivery(Base):
     fk_id_ponto_entrega = Column(Integer, ForeignKey("PontoDistribuicao.id"))
     is_delivered = Column(Boolean, default="False")
     
+    vehicle = relationship("Veiculo", back_populates="Entrega")
+    product = relationship("Produto", back_populates="Entrega")
+    distribution_point = relationship("PontoDistribuicao", back_populates="Entrega")
+    route = relationship("Rota", back_populates="Entrega")
 
 
 class Employee(Base):
@@ -121,4 +139,4 @@ class Employee(Base):
     area = Column(String)
     fk_id_usuario = Column(Integer, ForeignKey("Usuario.id"))
 
-
+    user = relationship("Usuario", back_populates="Funcionario")
