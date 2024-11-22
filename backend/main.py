@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from sqlalchemy.sql import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import engine, Base, async_sessionmaker
 from routers import clients
@@ -24,7 +25,7 @@ async def root():
 async def healthcheck():
     try:
         async with async_sessionmaker() as session:
-            await session.execute("SELECT 1")  
+            await session.execute(text("SELECT 1"))  
         return {"status": "ok", "database": "connected"}
     except Exception as e:
         return {"status": "error", "database": str(e)}
