@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+import services.routing
 import models
 import schemas
 
@@ -102,8 +103,25 @@ async def select_best_vehicle_for_delivery(db: AsyncSession, delivery_id: int):
     return best_vehicles
 
 # 7. Geração de Rotas de Entrega
-async def create_route(db: AsyncSession, route: schemas.RouteCreate):
-    db_route = models.Rota(**route.dict())
+async def create_route(db: AsyncSession, delivery_id: int, origin: str, destination: str):
+
+    google_route = await get_google_route(origin, destination)
+
+    # Criar a rota no banco de dados
+    db_route = models.Route(
+        origem=origin,
+        destino=destination,
+        distancia_m=google_route["distance"], 
+        tempo_estimado=google_route["duration"], 
+    )
+
+    # Associar a rota à entrega
+    delivery = await db.get(models.Delivery, delivery_id)
+    if delivery:
+        db_route.delivery = delivery
+    else:
+        raise Exception("Entrega não encontrada.")
+
     db.add(db_route)
     await db.commit()
     await db.refresh(db_route)
