@@ -5,7 +5,12 @@ import schemas
 
 # 1. Cadastro de Clientes
 async def create_client(db: AsyncSession, client: schemas.ClientCreate):
-    db_client = models.Cliente(**client.dict())
+    # Se cliente possui produtos, associar durante a criação
+    db_client = models.Client(**client.dict(exclude={"products"}))
+    if client.products:
+        for product in client.products:
+            db_product = models.Product(**product.dict())
+            db_client.products.append(db_product)
     db.add(db_client)
     await db.commit()
     await db.refresh(db_client)
@@ -29,11 +34,15 @@ async def get_products(db: AsyncSession, skip: int = 0, limit: int = 10):
 
 # 3. Cadastro de Veículos
 async def create_vehicle(db: AsyncSession, vehicle: schemas.VehicleCreate):
-    db_vehicle = models.Veiculo(**vehicle.dict())
+    db_vehicle = models.Vehicle(**vehicle.dict(exclude={"location"}))
+    if vehicle.location:
+        location = models.VehicleLocation(**vehicle.location.dict())
+        db_vehicle.location = location
     db.add(db_vehicle)
     await db.commit()
     await db.refresh(db_vehicle)
     return db_vehicle
+
 
 async def get_vehicles(db: AsyncSession, skip: int = 0, limit: int = 10):
     result = await db.execute(select(models.Veiculo).offset(skip).limit(limit))
@@ -41,7 +50,11 @@ async def get_vehicles(db: AsyncSession, skip: int = 0, limit: int = 10):
 
 # Cadastro de Motoristas
 async def create_driver(db: AsyncSession, driver: schemas.DriverCreate):
-    db_driver = models.Motorista(**driver.dict())
+    db_driver = models.Driver(**driver.dict(exclude={"vehicle"}))
+    if driver.vehicle:
+        vehicle = await db.get(models.Vehicle, driver.vehicle.id)
+        if vehicle:
+            db_driver.vehicle = vehicle
     db.add(db_driver)
     await db.commit()
     await db.refresh(db_driver)
@@ -77,13 +90,16 @@ async def get_vehicle_locations(db: AsyncSession, skip: int = 0, limit: int = 10
 
 # 6. Seleção de Melhor Veículo para Realizar uma Entrega
 async def select_best_vehicle_for_delivery(db: AsyncSession, delivery_id: int):
-    result = await db.execute(select(models.Veiculo).filter_by(is_available=True))
+    result = await db.execute(select(models.Vehicle).filter_by(is_available=True))
     available_vehicles = result.scalars().all()
     best_vehicle = max(available_vehicles, key=lambda v: v.capacidade, default=None)
     if best_vehicle:
         best_vehicle.is_available = False
+        db_delivery = await db.get(models.Delivery, delivery_id)
+        if db_delivery:
+            db_delivery.vehicle = best_vehicle
         await db.commit()
-    return best_vehicle
+    return best_vehicles
 
 # 7. Geração de Rotas de Entrega
 async def create_route(db: AsyncSession, route: schemas.RouteCreate):
@@ -113,7 +129,9 @@ async def get_geographic_data(db: AsyncSession):
 # 9. Relatório de Entregas por Veículo e por Período
 async def get_deliveries_report(db: AsyncSession, vehicle_id: int):
     result = await db.execute(
-        select(models.Entrega).filter(models.Entrega.fk_id_veiculo == vehicle_id)
+        select(models.Delivery)
+        .filter(models.Delivery.fk_id_vehicle == vehicle_id)
+        .options(selectinload(models.Delivery.product), selectinload(models.Delivery.distribution_point))
     )
     return result.scalars().all()
 
