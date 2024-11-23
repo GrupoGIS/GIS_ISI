@@ -9,7 +9,7 @@ import {
 import Login from '@/pages/login'
 import RegisterClient from '@/pages/admin/register-client'
 // import RegisterVehicle from '@/pages/admin/register-vehicle'
-// import RegisterProduct from '@/pages/admin/register-product'
+import RegisterProduct from '@/pages/admin/register-product'
 // import ProductList from '@/pages/client/product-list'
 // import TrackDelivery from '@/pages/client/track-delivery'
 // import DriverTrack from '@/pages/driver/driver-track'
@@ -37,7 +37,7 @@ const AppRouter: React.FC = () => (
             <RegisterVehicle />
           </PrivateRoute>
         }
-      />
+      />*/}
       <Route
         path="/adm/register/product"
         element={
@@ -45,7 +45,7 @@ const AppRouter: React.FC = () => (
             <RegisterProduct />
           </PrivateRoute>
         }
-      /> */}
+      />
 
       {/* Client Routes */}
       {/* <Route
