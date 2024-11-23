@@ -115,6 +115,34 @@ export interface RegisterDistributionPointData {
   tipo: string
 }
 
+export interface RegisterDriverData {
+  nome: string
+  email: string
+  telefone: string
+  password: string
+}
+
+export interface RegisterVehicleData {
+  marca: string
+  modelo: string
+  ano: number
+  placa: string
+  latitude: number
+  longitude: number
+  fk_id_motorista: number
+}
+
+export interface Vehicle {
+  id: number
+  marca: string
+  modelo: string
+  ano: number
+  placa: string
+  latitude: number
+  longitude: number
+  fk_id_motorista: number
+}
+
 // Funções da API
 
 // Login do usuário
@@ -178,5 +206,24 @@ export const fetchDistributionPoints = async (): Promise<
   DistributionPoint[]
 > => {
   const response = await API.get<DistributionPoint[]>('/distribution-points')
+  return response.data
+}
+
+export const registerDriver = async (
+  data: RegisterDriverData
+): Promise<Driver> => {
+  const response = await axios.post<Driver>('/api/drivers', data)
+  return response.data
+}
+
+export const fetchDrivers = async (): Promise<Driver[]> => {
+  const response = await axios.get<Driver[]>('/api/drivers')
+  return response.data
+}
+
+export const registerVehicle = async (
+  data: RegisterVehicleData
+): Promise<Vehicle> => {
+  const response = await axios.post<Vehicle>('/api/vehicles', data)
   return response.data
 }

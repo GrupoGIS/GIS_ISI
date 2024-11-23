@@ -8,7 +8,7 @@ import {
 
 import Login from '@/pages/login'
 import RegisterClient from '@/pages/admin/register-client'
-// import RegisterVehicle from '@/pages/admin/register-vehicle'
+import RegisterVehicle from '@/pages/admin/register-vehicle'
 import RegisterProduct from '@/pages/admin/register-product'
 // import ProductList from '@/pages/client/product-list'
 // import TrackDelivery from '@/pages/client/track-delivery'
@@ -30,14 +30,14 @@ const AppRouter: React.FC = () => (
           </PrivateRoute>
         }
       />
-      {/* <Route
+      <Route
         path="/adm/register/vehicle"
         element={
           <PrivateRoute role="admin">
             <RegisterVehicle />
           </PrivateRoute>
         }
-      />*/}
+      />
       <Route
         path="/adm/register/product"
         element={
