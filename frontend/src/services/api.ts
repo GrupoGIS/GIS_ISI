@@ -3,4 +3,9 @@ const loginUser = async (email: string, password: string) => {
   // return response.data
 }
 
-export { loginUser }
+const registerClient = async (data: any) => {
+  // const response = await api.post('/clients', data)
+  // return response.data
+}
+
+export { loginUser, registerClient }

@@ -6,8 +6,10 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute = ({ children, role }: PrivateRouteProps) => {
-  const token = localStorage.getItem('token')
-  const userRole = localStorage.getItem('userRole')
+  // const token = localStorage.getItem('token')
+  // const userRole = localStorage.getItem('userRole')
+  const token = 'token'
+  const userRole = 'admin'
 
   if (!token) {
     return <Navigate to="/login" />

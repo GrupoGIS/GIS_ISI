@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom'
 
 import Login from '@/pages/login'
-// import RegisterClient from '@/pages/admin/register-client'
+import RegisterClient from '@/pages/admin/register-client'
 // import RegisterVehicle from '@/pages/admin/register-vehicle'
 // import RegisterProduct from '@/pages/admin/register-product'
 // import ProductList from '@/pages/client/product-list'
@@ -22,7 +22,7 @@ const AppRouter: React.FC = () => (
       <Route path="/login" element={<Login />} />
 
       {/* Admin Routes */}
-      {/* <Route
+      <Route
         path="/adm/register/client"
         element={
           <PrivateRoute role="admin">
@@ -30,7 +30,7 @@ const AppRouter: React.FC = () => (
           </PrivateRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/adm/register/vehicle"
         element={
           <PrivateRoute role="admin">
