@@ -17,6 +17,7 @@ class ClientCreate(ClientBase):
 class Client(ClientBase):
     id: int
     fk_id_usuario: Optional[int]
+    products: Optional[List["Product"]] = None  # Produtos associados
 
     class Config:
         orm_mode = True
@@ -53,10 +54,10 @@ class VehicleCreate(VehicleBase):
 class Vehicle(VehicleBase):
     id: int
     fk_id_localizacao: Optional[int]
+    deliveries: Optional[List["Delivery"]] = None  # Entregas associadas
 
     class Config:
         orm_mode = True
-
 
 # Esquemas para a entidade Driver (Motorista)
 class DriverBase(BaseModel):
@@ -115,16 +116,17 @@ class VehicleLocation(VehicleLocationBase):
 
 # Esquemas para a entidade Route (Rota)
 class RouteBase(BaseModel):
-    origem: float
-    destino: float
+    origem: str  # Ajustado para string
+    destino: str  # Ajustado para string
     distancia_km: float
     tempo_estimado: int
 
 class RouteCreate(RouteBase):
-    fk_id_entrega: Optional[int]
+    fk_id_entrega: int  # Não opcional para criar uma rota
 
 class Route(RouteBase):
     id: int
+    fk_id_entrega: Optional[int]
 
     class Config:
         orm_mode = True
@@ -142,6 +144,8 @@ class DeliveryCreate(DeliveryBase):
 
 class Delivery(DeliveryBase):
     id: int
+    vehicle: Optional["Vehicle"] = None  # Associações explícitas
+    route: Optional["Route"] = None
 
     class Config:
         orm_mode = True
