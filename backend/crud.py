@@ -36,7 +36,7 @@ async def get_client_by_id_or_name(db: AsyncSession, client_id: int = None, name
 
 # 2. Cadastro de Produtos
 async def create_product(db: AsyncSession, product: schemas.ProductCreate):
-    db_product = models.Produto(**product.dict())
+    db_product = models.Product(**product.dict(), fk_id_cliente=client_id)
     db.add(db_product)
     await db.commit()
     await db.refresh(db_product)
@@ -45,6 +45,23 @@ async def create_product(db: AsyncSession, product: schemas.ProductCreate):
 async def get_products(db: AsyncSession, skip: int = 0, limit: int = 10):
     result = await db.execute(select(models.Produto).offset(skip).limit(limit))
     return result.scalars().all()
+
+async def get_products_by_client(db: AsyncSession, client_id: int):
+    result = await db.execute(
+        select(models.Product).where(models.Product.fk_id_cliente == client_id)
+    )
+    return result.scalars().all()
+
+# Buscar produto por ID
+async def get_product_by_id(db: AsyncSession, product_id: int):
+    result = await db.execute(select(models.Product).where(models.Product.id == product_id))
+    return result.scalars().first()
+
+# Buscar produtos por nome
+async def get_product_by_name(db: AsyncSession, name: str):
+    result = await db.execute(select(models.Product).where(models.Product.nome.ilike(f"%{name}%")))
+    return result.scalars().all()
+
 
 # 3. Cadastro de Veículos
 async def create_vehicle(db: AsyncSession, vehicle: schemas.VehicleCreate):

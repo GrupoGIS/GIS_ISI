@@ -15,7 +15,7 @@ def create_distribution_point(point: schemas.DistributionPointCreate, db: Sessio
     return crud.create_distribution_point(db=db, point=point)
 
 # Endpoint para listar todos os pontos de distribuição
-@router.get("/distribution_points/", response_model=List[schemas.DistributionPoint])
+@router.get("/distribution_points/", response_model=List[schemas.DistributionPoint], dependencies=[Depends(is_employee)])
 def read_distribution_points(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     points = crud.get_distribution_points(db, skip=skip, limit=limit)
     return points

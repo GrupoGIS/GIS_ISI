@@ -5,7 +5,6 @@ from typing import List
 import sys
 from .auth import is_employee
 sys.path.append("backend")
-# Importações ajustadas para manter a organização do projeto
 import crud
 import schemas
 from database import get_db
@@ -31,6 +30,14 @@ async def read_client(
     name: str = Query(None, description="Nome do cliente (caso o ID não seja fornecido)"),
     db: AsyncSession = Depends(get_db)
 ):
+
+    if client_id is None and name is None:
+        raise HTTPException(
+            status_code=400,
+            detail="É necessário fornecer pelo menos um parâmetro: 'client_id' ou 'name'."
+        )
+
+        
     client = await crud.get_client_by_id_or_name(db, client_id=client_id, name=name)
     if not client:
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
