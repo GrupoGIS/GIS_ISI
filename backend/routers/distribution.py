@@ -21,7 +21,7 @@ def read_distribution_points(skip: int = 0, limit: int = 10, db: Session = Depen
     return points
 
 # Endpoint para obter um ponto de distribuição específico
-@router.get("/distribution_points/{point_id}", response_model=schemas.DistributionPoint)
+@router.get("/distribution_points/{point_id}", response_model=schemas.DistributionPoint, dependencies=[Depends(is_employee)])
 def read_distribution_point(point_id: int, db: Session = Depends(get_db)):
     point = crud.get_distribution_point(db, point_id)
     if point is None:

@@ -35,7 +35,7 @@ async def get_my_products(
     return products
 
 
-@router.get("/product/{query}", response_model=list[schemas.Product], dependencies=[Depends(is_client)])
+@router.get("/product/{query}", response_model=list[schemas.Product], dependencies=[Depends(is_employee)])
 async def get_product_by_id_or_name(query: str, db: AsyncSession = Depends(get_db)):
     if query.isdigit():  # Se a query for um número, buscar por ID
         product = await crud.get_product_by_id(db, int(query))
@@ -49,7 +49,7 @@ async def get_product_by_id_or_name(query: str, db: AsyncSession = Depends(get_d
         return products
 
 
-@router.post("/products/", response_model=schemas.Product, dependencies=[Depends(is_client)])
+@router.post("/products/", response_model=schemas.Product, dependencies=[Depends(is_employee)])
 async def create_product(
     product: schemas.ProductCreate,
     db: AsyncSession = Depends(get_db),
@@ -66,7 +66,7 @@ async def create_product(
     # Cria o produto associado ao cliente
     return await crud.create_product(db, product, client_id=client.id)
 
-@router.get("/products/", response_model=list[schemas.Product])
+@router.get("/products/", response_model=list[schemas.Product], dependencies=[Depends(is_employee)])
 async def get_all_products(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
     products = await crud.get_all_products(db, skip=skip, limit=limit)
     if not products:
