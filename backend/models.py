@@ -55,7 +55,7 @@ class Vehicle(Base):
     is_available = Column(Boolean, default=True)
 
     drivers = relationship("Driver", back_populates="vehicle")
-    location = relationship("VehicleLocation", back_populates="vehicle")
+    location = relationship("VehicleLocation", back_populates="vehicle", foreign_keys=[fk_id_localizacao], remote_side="VehicleLocation.id")
     deliveries = relationship("Delivery", back_populates="vehicle")
     
 class Driver(Base):
@@ -90,12 +90,11 @@ class VehicleLocation(Base):
     __tablename__ = "LocalizacaoVeiculo"
     
     id = Column(Integer, primary_key=True, index=True)
-    fk_id_veiculo_ocupado = Column(Integer, ForeignKey("Veiculo.id"))
     latitude = Column(Float)
     longitude = Column(Float)
     data_hora = Column(Date)
     
-    vehicle = relationship("Vehicle", back_populates="location")
+    vehicle = relationship("Vehicle", back_populates="location", uselist=False)
 
 class Route(Base):
     __tablename__ = "Rota"

@@ -5,3 +5,8 @@ asyncpg
 pydantic
 geopy
 requests
+pyjwt
+python-dotenv
+python-jose
+passlib
+uuid
