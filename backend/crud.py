@@ -21,6 +21,19 @@ async def get_clients(db: AsyncSession, skip: int = 0, limit: int = 10):
     result = await db.execute(select(models.Cliente).offset(skip).limit(limit))
     return result.scalars().all()
 
+# Função para obter um cliente pelo ID ou nome
+async def get_client_by_id_or_name(db: AsyncSession, client_id: int = None, name: str = None):
+    query = select(Client)
+    if client_id is not None:
+        query = query.filter(Client.id == client_id)
+    elif name:
+        query = query.filter(Client.nome.ilike(f"%{name}%"))
+    else:
+        return None
+
+    result = await db.execute(query)
+    return result.scalars().first()
+
 # 2. Cadastro de Produtos
 async def create_product(db: AsyncSession, product: schemas.ProductCreate):
     db_product = models.Produto(**product.dict())
