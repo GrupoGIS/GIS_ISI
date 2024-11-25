@@ -144,19 +144,35 @@ async def get_product_by_name(db: AsyncSession, name: str):
 
 # 3. Cadastro de Veículos
 async def create_vehicle(db: AsyncSession, vehicle: schemas.VehicleCreate):
+    # Cria o veículo
     db_vehicle = models.Vehicle(**vehicle.dict(exclude={"location"}))
+    
+    # Cria a localização associada, se fornecida
     if vehicle.location:
-        location = models.VehicleLocation(**vehicle.location.dict())
-        db_vehicle.location = location
+        location_data = vehicle.location.dict()
+        # Certifique-se de que 'data_hora' está no formato correto
+        if isinstance(location_data.get("data_hora"), str):
+            from datetime import datetime
+            location_data["data_hora"] = datetime.strptime(location_data["data_hora"], "%Y-%m-%d").date()
+        location = models.VehicleLocation(**location_data)
+        db_vehicle.location = location  # Associa a localização ao veículo
+
     db.add(db_vehicle)
     await db.commit()
+
+    # Carrega o relacionamento 'location' para evitar problemas
     await db.refresh(db_vehicle)
     return db_vehicle
 
 
-async def get_vehicles(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(models.Veiculo).offset(skip).limit(limit))
-    return result.scalars().all()
+async def get_vehicle(db: AsyncSession, vehicle_id: int):
+    result = await db.execute(
+        select(models.Vehicle)
+        .options(selectinload(models.Vehicle.deliveries)) 
+        .where(models.Vehicle.id == vehicle_id)
+    )
+    vehicle = result.scalars().first()
+    return vehicle
 
 # Cadastro de Motoristas
 async def create_driver(db: AsyncSession, driver: schemas.DriverCreate):

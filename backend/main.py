@@ -34,7 +34,7 @@ app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(products.router, tags=["Products"])
 app.include_router(clients.router, tags=["Clients"])
 # app.include_router(distribution.router, prefix="/distribution", tags=["Distribution"])
-# app.include_router(veiculos.router, prefix="/veiculos", tags=["Veiculos"])
+app.include_router(veiculos.router, tags=["Veiculos"])
 
 @app.on_event("startup")
 async def startup_event():

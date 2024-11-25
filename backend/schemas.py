@@ -47,6 +47,17 @@ class Product(ProductBase):
         orm_mode = True
 
 
+class VehicleLocationBase(BaseModel):
+    latitude: float
+    longitude: float
+    data_hora: Optional[date]
+
+class VehicleLocationCreate(VehicleLocationBase):
+    latitude: float
+    longitude: float
+    data_hora: date
+
+
 # Esquemas para a entidade Vehicle (Veiculo)
 class VehicleBase(BaseModel):
     placa: str
@@ -55,11 +66,15 @@ class VehicleBase(BaseModel):
     is_available: bool = True
 
 class VehicleCreate(VehicleBase):
-    pass
+    placa: str
+    modelo: str
+    capacidade: int
+    is_available: Optional[bool] = True  # Disponível por padrão
+    location: VehicleLocationCreate
 
 class Vehicle(VehicleBase):
     id: int
-    fk_id_localizacao: Optional[int]
+    fk_id_localizacao: int
     deliveries: Optional[List["Delivery"]] = None  # Entregas associadas
 
     class Config:
@@ -104,20 +119,18 @@ class DistributionPoint(DistributionPointBase):
         orm_mode = True
 
 
-# Esquemas para a entidade VehicleLocation (LocalizacaoVeiculo)
-class VehicleLocationBase(BaseModel):
-    latitude: float
-    longitude: float
-    data_hora: date
 
-class VehicleLocationCreate(VehicleLocationBase):
-    fk_id_veiculo_ocupado: Optional[int]
+class VehicleLocationUpdate(BaseModel):
+    latitude: Optional[float]
+    longitude: Optional[float]
+    data_hora: Optional[date]
 
 class VehicleLocation(VehicleLocationBase):
     id: int
 
     class Config:
         orm_mode = True
+
 
 
 # Esquemas para a entidade Route (Rota)
