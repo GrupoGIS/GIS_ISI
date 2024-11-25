@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 import sys
@@ -7,8 +7,24 @@ from .auth import get_current_user, is_client, is_employee
 sys.path.append("backend")
 import crud
 import schemas
+import models
 
 router = APIRouter()
+
+@router.post("/create_product/", response_model=schemas.Product, dependencies=[Depends(is_employee)])
+async def create_product(
+    product: schemas.ProductCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+
+    result = await db.execute(select(models.Client).where(models.Client.id == product.fk_id_cliente))
+    client = result.scalars().first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado.")
+
+    created_product = await crud.create_product(db, product, product.fk_id_cliente)
+    return created_product
 
 # Rota para obter produtos do cliente autenticado
 @router.get("/products/my/", response_model=list[schemas.Product], dependencies=[Depends(is_client)])
@@ -49,26 +65,9 @@ async def get_product_by_id_or_name(query: str, db: AsyncSession = Depends(get_d
         return products
 
 
-@router.post("/products/", response_model=schemas.Product, dependencies=[Depends(is_employee)])
-async def create_product(
-    product: schemas.ProductCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    # Obtém o cliente associado ao usuário autenticado
-    user_id = current_user.get("id")
-    result = await db.execute(select(models.Client).where(models.Client.fk_id_usuario == user_id))
-    client = result.scalars().first()
-
-    if not client:
-        raise HTTPException(status_code=404, detail="Cliente não encontrado.")
-
-    # Cria o produto associado ao cliente
-    return await crud.create_product(db, product, client_id=client.id)
-
 @router.get("/products/", response_model=list[schemas.Product], dependencies=[Depends(is_employee)])
 async def get_all_products(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
-    products = await crud.get_all_products(db, skip=skip, limit=limit)
+    products = await crud.get_products(db, skip=skip, limit=limit)
     if not products:
         raise HTTPException(status_code=404, detail="Nenhum produto encontrado.")
     return products

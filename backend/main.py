@@ -31,8 +31,8 @@ async def create_admin_user():
 app = FastAPI()
 
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-app.include_router(products.router, prefix="/products", tags=["Products"])
-app.include_router(clients.router, prefix="/clients", tags=["Clients"])
+app.include_router(products.router, tags=["Products"])
+app.include_router(clients.router, tags=["Clients"])
 # app.include_router(distribution.router, prefix="/distribution", tags=["Distribution"])
 # app.include_router(veiculos.router, prefix="/veiculos", tags=["Veiculos"])
 

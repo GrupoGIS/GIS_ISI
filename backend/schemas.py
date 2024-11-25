@@ -33,7 +33,11 @@ class ProductBase(BaseModel):
     quantidade_estoque: int
 
 class ProductCreate(ProductBase):
-    pass
+    nome: str
+    descricao: str
+    preco: int
+    quantidade_estoque: int
+    fk_id_cliente: int
 
 class Product(ProductBase):
     id: int

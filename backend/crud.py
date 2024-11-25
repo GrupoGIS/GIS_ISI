@@ -112,15 +112,17 @@ async def get_client_by_id_or_name(db: AsyncSession, client_id: int = None, name
     return result.scalars().first()
 
 # 2. Cadastro de Produtos
-async def create_product(db: AsyncSession, product: schemas.ProductCreate):
-    db_product = models.Product(**product.dict(), fk_id_cliente=client_id)
+async def create_product(db: AsyncSession, product: schemas.ProductCreate, client_id: int):
+    product_data = product.dict()
+    product_data.pop("fk_id_cliente", None)
+    db_product = models.Product(**product_data, fk_id_cliente=client_id)
     db.add(db_product)
     await db.commit()
     await db.refresh(db_product)
     return db_product
 
 async def get_products(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(models.Produto).offset(skip).limit(limit))
+    result = await db.execute(select(models.Product).offset(skip).limit(limit))
     return result.scalars().all()
 
 async def get_products_by_client(db: AsyncSession, client_id: int):

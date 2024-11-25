@@ -70,6 +70,7 @@ async def login(email: str, password: str, db: AsyncSession = Depends(get_db)):
     # Cria o token com as permissões do usuário
     access_token = create_access_token(data={
         "sub": str(user.id),
+        "id": user.id,
         "is_client": user.is_client,
         "is_driver": user.is_driver,
         "is_employee": user.is_employee
