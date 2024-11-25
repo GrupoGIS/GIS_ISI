@@ -100,9 +100,7 @@ class Route(Base):
     __tablename__ = "Rota"
     
     id = Column(Integer, primary_key=True, index=True)
-    origem = Column(Float)
-    destino = Column(Float)
-    distancia_m = Column(Float)
+    distancia_km = Column(Float)
     tempo_estimado = Column(Integer)  
     fk_id_entrega = Column(Integer, ForeignKey("Entrega.id"))
 
