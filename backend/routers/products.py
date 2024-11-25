@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 import sys
 from database import get_db
-from .auth import get_current_user, is_client
+from .auth import get_current_user, is_client, is_employee
 sys.path.append("backend")
 import crud
 import schemas

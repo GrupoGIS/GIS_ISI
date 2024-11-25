@@ -1,33 +1,110 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-import services.routing
 import models
+from models import User
+from routers.auth import generate_salt
 import schemas
+from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.exc import IntegrityError
+from passlib.context import CryptContext
+import uuid
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# cadastro de usuário
+async def create_user(
+    db: AsyncSession,
+    email: str,
+    password: str,
+    is_client: bool = False,
+    is_driver: bool = False,
+    is_employee: bool = False,
+):
+    # Gera um salt e o hash da senha
+    salt = str(uuid.uuid4()).replace("-", "")
+    hashed_password = pwd_context.hash(password + salt)
+
+    # Cria o objeto do usuário
+    db_user = User(
+        email=email,
+        password_hash=hashed_password,
+        salt=salt,
+        is_client=is_client,
+        is_driver=is_driver,
+        is_employee=is_employee,
+    )
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
+
+
 
 # 1. Cadastro de Clientes
 async def create_client(db: AsyncSession, client: schemas.ClientCreate):
-    # Se cliente possui produtos, associar durante a criação
-    db_client = models.Client(**client.dict(exclude={"products"}))
-    if client.products:
+     salt = str(uuid.uuid4()).replace("-", "")
+     db_user = models.User(
+        email=client.email,
+        password_hash=pwd_context.hash(client.password + salt),  # Hash da senha com salt
+        salt=salt,
+        is_client=True,  # Define que o usuário é um cliente
+        is_driver=False,
+        is_employee=False,
+    )
+
+    # Criação do cliente
+     db_client = models.Client(
+        nome=client.nome,
+        end_rua=client.end_rua,
+        end_bairro=client.end_bairro,
+        end_numero=client.end_numero,
+        telefone=client.telefone,
+        user=db_user,  # Associação com o usuário
+    )
+
+    # Adiciona os produtos associados ao cliente, se fornecidos
+     if client.products:
         for product in client.products:
-            db_product = models.Product(**product.dict())
+            db_product = models.Product(
+                nome=product.nome,
+                descricao=product.descricao,
+                preco=product.preco,
+                quantidade_estoque=product.quantidade_estoque,
+            )
             db_client.products.append(db_product)
-    db.add(db_client)
-    await db.commit()
-    await db.refresh(db_client)
-    return db_client
+
+     db.add(db_client)
+     try:
+        await db.commit()
+        await db.refresh(db_client)
+     except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400, detail="Erro ao criar cliente: e-mail já está em uso."
+        )
+
+     await db.refresh(db_client, ["products"])
+
+     return db_client
 
 async def get_clients(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(models.Cliente).offset(skip).limit(limit))
-    return result.scalars().all()
+    query = (
+        select(models.Client)
+        .options(joinedload(models.Client.products))  # Carregamento de relacionamento
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(query)
+    clients = result.unique().scalars().all()
+    return clients
 
 # Função para obter um cliente pelo ID ou nome
 async def get_client_by_id_or_name(db: AsyncSession, client_id: int = None, name: str = None):
-    query = select(Client)
+    query = select(models.Client).options(joinedload(models.Client.products))
     if client_id is not None:
-        query = query.filter(Client.id == client_id)
+        query = query.filter(models.Client.id == client_id)
     elif name:
-        query = query.filter(Client.nome.ilike(f"%{name}%"))
+        query = query.filter(models.Client.nome.ilike(f"%{name}%"))
     else:
         return None
 

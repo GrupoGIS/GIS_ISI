@@ -10,9 +10,12 @@ from jose import JWTError
 from sqlalchemy.future import select
 from fastapi.security import OAuth2PasswordBearer
 import uuid
+import os
+import secrets
 
 # Configurações do JWT
-SECRET_KEY = str(uuid.uuid4()).replace("-", "")
+## SECRET_KEY = str(uuid.uuid4()).replace("-", "")
+SECRET_KEY = os.getenv("SECRET_KEY", "keykyekyekeykeykeykey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -21,6 +24,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 router = APIRouter()
+
+def generate_salt(length: int = 16) -> str:
+    return secrets.token_hex(length)
 
 def verify_password(plain_password, hashed_password, salt):
     return pwd_context.verify(plain_password + salt, hashed_password)
@@ -63,7 +69,7 @@ async def login(email: str, password: str, db: AsyncSession = Depends(get_db)):
     
     # Cria o token com as permissões do usuário
     access_token = create_access_token(data={
-        "sub": user.id,
+        "sub": str(user.id),
         "is_client": user.is_client,
         "is_driver": user.is_driver,
         "is_employee": user.is_employee

@@ -1,13 +1,32 @@
 from fastapi import FastAPI
 from sqlalchemy.sql import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import engine, Base, async_sessionmaker
+from sqlalchemy.future import select
+from database import engine, Base, async_sessionmaker, get_db
 from routers import auth, products, clients, distribution, veiculos
+from models import User
+from crud import create_user
 import uvicorn
 
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+async def create_admin_user():
+    async for db in get_db():  
+        result = await db.execute(select(User).where(User.email == "admin@admin.com"))
+        existing_user = result.scalars().first()
+        
+        if not existing_user:  # Evita criar duplicados
+            await create_user(
+                db=db,
+                email="admin@admin.com",
+                password="123",
+                is_employee=True  
+            )
+            print("Usuário administrador criado: admin@admin.com")
+        else:
+            print("Usuário administrador já existe.")
 
 app = FastAPI()
 
@@ -20,6 +39,7 @@ app.include_router(clients.router, prefix="/clients", tags=["Clients"])
 @app.on_event("startup")
 async def startup_event():
     await create_tables()
+    await create_admin_user()
 
 @app.get("/")
 async def root():

@@ -12,7 +12,9 @@ class ClientBase(BaseModel):
     telefone: int
 
 class ClientCreate(ClientBase):
-    pass
+    email: str  
+    password: str 
+    products: Optional[List["ProductCreate"]] = None
 
 class Client(ClientBase):
     id: int
