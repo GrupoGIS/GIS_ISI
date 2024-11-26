@@ -87,6 +87,8 @@ async def create_delivery(delivery_data: DeliveryCreate, db: AsyncSession = Depe
     new_delivery.fk_id_veiculo = best_vehicle.id  # Associa o veículo à entrega
     await db.commit()
 
+    await db.refresh(best_vehicle)
+
     return DeliveryResponse(
         id=new_delivery.id,
         status=new_delivery.status,
