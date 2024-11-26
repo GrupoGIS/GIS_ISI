@@ -209,3 +209,26 @@ class Employee(EmployeeBase):
 class VehicleUpdateRequest(BaseModel):
     latitude: float
     longitude: float
+    
+    
+class DeliveryDetailsResponse(BaseModel):
+    delivery_id: int
+    status: str
+    data_criacao: Optional[str]
+    data_entrega: Optional[str]
+    vehicle_id: Optional[int]
+    vehicle_plate: Optional[str]
+    vehicle_model: Optional[str]
+    product_name: Optional[str]
+    product_quantity: Optional[int]
+    distribution_point_name: Optional[str]
+    distribution_point_lat: Optional[float]
+    distribution_point_lon: Optional[float]
+    route_id: Optional[int]
+    route_description: Optional[str]
+    client_id: Optional[int]
+    client_name: Optional[str]
+    client_email: Optional[str]
+
+    class Config:
+        orm_mode = True

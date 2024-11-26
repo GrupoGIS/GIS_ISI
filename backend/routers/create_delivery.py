@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from backend.database import get_db
-from backend.models import Delivery, Vehicle, Product
-from backend.schemas import DeliveryCreate, DeliveryResponse
+from backend.models import Delivery, Vehicle, Product, DistributionPoint, Route, Client
+from backend.schemas import DeliveryCreate, DeliveryResponse, DeliveryDetailsResponse
 from geopy.distance import geodesic
 from datetime import datetime
+from typing import List
 
 router = APIRouter()
 
@@ -97,3 +98,54 @@ async def update_delivery_status(delivery_id: int, status: str, db: Session = De
         data_entrega=delivery.data_entrega
     )
 
+
+
+@router.get("/deliveries", response_model=List[DeliveryDetailsResponse])
+async def get_deliveries(user_role: str, user_id: int, db: Session = Depends(get_db)):
+    """
+    Retorna entregas baseadas no papel do usuário.
+    - user_role: 'motorista', 'cliente', ou 'funcionario'.
+    - user_id: ID do usuário (usado para buscar entregas associadas).
+    """
+    # Query base para as entregas
+    query = db.query(
+        Delivery.id.label("delivery_id"),
+        Delivery.status,
+        Delivery.data_criacao,
+        Delivery.data_entrega,
+        Vehicle.id.label("vehicle_id"),
+        Vehicle.placa.label("vehicle_plate"),
+        Vehicle.modelo.label("vehicle_model"),
+        Product.nome.label("product_name"),
+        Product.quantidade.label("product_quantity"),
+        DistributionPoint.nome.label("distribution_point_name"),
+        DistributionPoint.latitude.label("distribution_point_lat"),
+        DistributionPoint.longitude.label("distribution_point_lon"),
+        Route.id.label("route_id"),
+        Route.descricao.label("route_description"),
+        Client.id.label("client_id"),
+        Client.nome.label("client_name"),
+        Client.email.label("client_email")
+    ).join(Vehicle, Delivery.fk_id_veiculo == Vehicle.id, isouter=True) \
+     .join(Product, Delivery.fk_id_produto == Product.id, isouter=True) \
+     .join(DistributionPoint, Delivery.fk_id_ponto_entrega == DistributionPoint.id, isouter=True) \
+     .join(Route, Delivery.route_id == Route.id, isouter=True) \
+     .join(Client, Delivery.client_id == Client.id, isouter=True)
+
+    # Filtrar dados com base no papel do usuário
+    if user_role == "motorista":
+        # Motorista vê entregas associadas ao veículo que ele está dirigindo
+        deliveries = query.filter(Vehicle.driver_id == user_id).all()
+    elif user_role == "cliente":
+        # Cliente vê apenas entregas associadas ao seu ID
+        deliveries = query.filter(Delivery.client_id == user_id).all()
+    elif user_role == "funcionario":
+        # Funcionário pode visualizar todas as entregas
+        deliveries = query.all()
+    else:
+        raise HTTPException(status_code=400, detail="Papel do usuário inválido")
+
+    if not deliveries:
+        raise HTTPException(status_code=404, detail="Nenhuma entrega encontrada")
+
+    return deliveries
