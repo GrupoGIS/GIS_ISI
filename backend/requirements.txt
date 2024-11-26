@@ -12,3 +12,4 @@ passlib
 uuid
 geopy
 datetime
+geodesic
