@@ -22,3 +22,10 @@ async def get_db():
             yield session
         finally:
             await session.close()
+
+def restart_db():
+    # Deleta todas as tabelas
+    Base.metadata.drop_all(bind=engine)
+    
+    # Cria novamente todas as tabelas
+    Base.metadata.create_all(bind=engine)

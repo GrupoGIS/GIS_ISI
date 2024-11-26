@@ -69,6 +69,18 @@ class VehicleLocationBase(BaseModel):
     longitude: float
     data_hora: Optional[datetime]
 
+class VehicleLocationUpdate(BaseModel):
+    latitude: Optional[float]
+    longitude: Optional[float]
+    data_hora: Optional[datetime]
+
+class VehicleLocation(VehicleLocationBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
 class VehicleLocationCreate(VehicleLocationBase):
     latitude: float
     longitude: float
@@ -119,18 +131,6 @@ class Driver(DriverBase):
         orm_mode = True
 
 
-class VehicleLocationUpdate(BaseModel):
-    latitude: Optional[float]
-    longitude: Optional[float]
-    data_hora: Optional[datetime]
-
-class VehicleLocation(VehicleLocationBase):
-    id: int
-
-    class Config:
-        orm_mode = True
-
-
 
 # Esquemas para a entidade Route (Rota)
 class RouteBase(BaseModel):
@@ -163,9 +163,10 @@ class RouteUpdate(BaseModel):
 class DeliveryBase(BaseModel):
     status: str = "pending"
     is_delivered: bool = False
+    data_criacao: Optional[datetime] = None
+    data_entrega: Optional[datetime] = None
 
 class DeliveryCreate(DeliveryBase):
-    fk_id_veiculo: int
     fk_id_produto: int
     fk_id_ponto_entrega: int
 
@@ -173,6 +174,8 @@ class Delivery(DeliveryBase):
     id: int
     vehicle: Optional["Vehicle"] = None  # Associações explícitas
     route: Optional["Route"] = None
+    data_criacao: Optional[datetime] = None   # Adicionando data_criacao ao schema
+    data_entrega: Optional[datetime] = None  # Adicionando data_entrega ao schema
 
     class Config:
         orm_mode = True
@@ -186,13 +189,13 @@ class ProductInDelivery(BaseModel):
 #    origin_lon: float  
 #    products: List[ProductInDelivery]  
     
-class DeliveryResponse(BaseModel):
+class DeliveryResponse(DeliveryBase):
     id: int
-    status: str
-    fk_id_veiculo: Optional[int]
-    total_capacity_needed: int
     vehicle: Optional["Vehicle"]
-
+    route: Optional["Route"]
+    data_criacao: datetime
+    data_entrega: Optional[datetime]
+    
     class Config:
         orm_mode = True
 

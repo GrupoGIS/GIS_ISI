@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 import sys
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 sys.path.append("backend")
 import crud 
+import models
+from services.add_to_latlong import get_lat_long_from_address
 from database import get_db
 from models import Delivery, Vehicle, Product, DistributionPoint, Route, Client
 from schemas import DeliveryCreate, DeliveryResponse, DeliveryDetailsResponse
@@ -12,22 +14,41 @@ from geopy.distance import geodesic
 from datetime import datetime
 from typing import List
 
+
 router = APIRouter()
 
 
 @router.post("/create_delivery", response_model=DeliveryResponse)
 async def create_delivery(delivery_data: DeliveryCreate, db: AsyncSession = Depends(get_db)):
-    # 1. Calcular a capacidade total necessária para a entrega
-    product = await crud.get_product_by_id(db, delivery_data.fk_id_produto)
+    # 1. Buscar o produto e obter o cliente relacionado
+    result = await db.execute(
+        select(Product).options(joinedload(Product.client)).where(Product.id == delivery_data.fk_id_produto)
+    )
+    product = result.scalars().first()
 
     if not product:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
+    client = product.client
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
 
+    # 2. Obter a localização do cliente
+    try:
+        origin_lat, origin_lon = get_lat_long_from_address(client.end_rua, client.end_bairro, client.end_numero)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # 3. Calcular a capacidade total necessária para a entrega
     total_capacity_needed = product.quantidade_estoque
 
-    # 2. Buscar veículos disponíveis
-    result = await db.execute(select(models.Vehicle).where(Vehicle.is_available == True))
+    # 4. Buscar veículos disponíveis
+    result = await db.execute(
+        select(Vehicle)
+        .options(joinedload(Vehicle.location))  # Carregar localização junto
+        .where(Vehicle.is_available == True)
+        .filter(Vehicle.capacidade >= total_capacity_needed)
+    )
     available_vehicles = result.scalars().all()
 
     if not available_vehicles:
@@ -36,57 +57,55 @@ async def create_delivery(delivery_data: DeliveryCreate, db: AsyncSession = Depe
     best_vehicle = None
     min_distance = float('inf')
 
-    # 3. Verificar a disponibilidade de veículos e calcular a distância
+    # 5. Verificar a disponibilidade de veículos e calcular a distância
     for vehicle in available_vehicles:
-        if vehicle.capacidade >= total_capacity_needed:
-            # Calcular a distância usando a localização do veículo
-            vehicle_location = (vehicle.location.latitude, vehicle.location.longitude)
-            origin_location = (delivery_data.origin_lat, delivery_data.origin_lon)
+        vehicle_location = (vehicle.location.latitude, vehicle.location.longitude)
+        vehicle_distance = geodesic(vehicle_location, (origin_lat, origin_lon)).kilometers
 
-            # Calcular a distância
-            vehicle_distance = geodesic(vehicle_location, origin_location).kilometers
+        if vehicle_distance < min_distance:
+            best_vehicle = vehicle
+            min_distance = vehicle_distance
 
-            # Verificar se o veículo é o mais próximo
-            if vehicle_distance < min_distance:
-                best_vehicle = vehicle
-                min_distance = vehicle_distance
-
-    # Se não houver veículos com capacidade suficiente
     if not best_vehicle:
         raise HTTPException(status_code=400, detail="Nenhum veículo com capacidade suficiente encontrado")
 
-    # 4. Criar a entrega com fk_id_veiculo inicialmente como None
+    # 6. Criar a entrega com fk_id_veiculo inicialmente como None
     new_delivery = Delivery(
         status="Em processo", 
-        total_capacity_needed=total_capacity_needed,
-        fk_id_veiculo=None  # Inicialmente sem veículo
+        fk_id_veiculo=None,  # Inicialmente sem veículo
+        fk_id_produto=delivery_data.fk_id_produto,
+        fk_id_ponto_entrega=delivery_data.fk_id_ponto_entrega,
+        data_criacao=datetime.utcnow()
     )
 
     db.add(new_delivery)
     await db.commit()
     await db.refresh(new_delivery)
 
-    # 5. Atualizar a entrega com o veículo mais próximo
+    # 7. Atualizar a entrega com o veículo mais próximo
     best_vehicle.is_available = False  # Marca o veículo como não disponível
     new_delivery.fk_id_veiculo = best_vehicle.id  # Associa o veículo à entrega
     await db.commit()
 
-    # Retorna a resposta da entrega
     return DeliveryResponse(
-        id=new_delivery.id, 
-        status=new_delivery.status, 
-        fk_id_veiculo=best_vehicle.id, 
-        total_capacity_needed=total_capacity_needed, 
-        vehicle=best_vehicle
+        id=new_delivery.id,
+        status=new_delivery.status,
+        fk_id_veiculo=best_vehicle.id,
+        vehicle=best_vehicle,  # Incluindo o veículo completo no retorno
+        route=None,  # Se você deseja retornar uma rota, você deve definir logicamente o que é a 'rota'
+        data_criacao=new_delivery.data_criacao,
+        data_entrega=new_delivery.data_entrega  # O valor de 'data_entrega' será None, mas você pode preenchê-lo mais tarde
     )
+
 
 
 
 @router.put("/update_delivery/{delivery_id}", response_model=DeliveryResponse)
 async def update_delivery_status(delivery_id: int, status: str, db: AsyncSession = Depends(get_db)):
     # Buscar a entrega no banco
-    delivery = db.query(Delivery).filter(Delivery.id == delivery_id).first()
-    
+    result = await db.execute(select(Delivery).filter(Delivery.id == delivery_id))
+    delivery = result.scalars().first()
+
     if not delivery:
         raise HTTPException(status_code=404, detail="Entrega não encontrada")
 
@@ -97,8 +116,8 @@ async def update_delivery_status(delivery_id: int, status: str, db: AsyncSession
     if status == "delivered" and not delivery.data_entrega:
         delivery.data_entrega = datetime.utcnow()  # Preenche a data de entrega com a hora atual
     
-    db.commit()
-    db.refresh(delivery)
+    await db.commit()
+    await db.refresh(delivery)
     
     return DeliveryResponse(
         id=delivery.id,

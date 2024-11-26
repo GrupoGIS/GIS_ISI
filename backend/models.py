@@ -56,7 +56,7 @@ class Vehicle(Base):
     is_available = Column(Boolean, default=True)
 
     drivers = relationship("Driver", back_populates="vehicle")
-    location = relationship("VehicleLocation", back_populates="vehicle", foreign_keys=[fk_id_localizacao], remote_side="VehicleLocation.id")
+    location = relationship("VehicleLocation", back_populates="vehicle", foreign_keys=[fk_id_localizacao], remote_side="VehicleLocation.id", lazy="joined")
     deliveries = relationship("Delivery", back_populates="vehicle")
     
 class Driver(Base):
@@ -113,13 +113,13 @@ class Delivery(Base):
     __tablename__ = "Entrega"
     
     id = Column(Integer, primary_key=True, index=True)
-    fk_id_veiculo = Column(Integer, ForeignKey("Veiculo.id"))
+    fk_id_veiculo = Column(Integer, ForeignKey("Veiculo.id"), nullable=True)
     fk_id_produto = Column(Integer, ForeignKey("Produto.id"))
     fk_id_ponto_entrega = Column(Integer, ForeignKey("PontoDistribuicao.id"))
     status = Column(String, default="pending")  # Exemplo: "pending", "in_progress", "delivered"
     is_delivered = Column(Boolean, default=False)
-    data_criacao = Column(DateTime, default=datetime.utcnow)  # Data da criação
-    data_entrega = Column(DateTime, nullable=True)  # Data de entrega (será preenchida quando status for "delivered")
+    data_criacao = Column(DateTime, default=datetime.utcnow, nullable=True)  # Data da criação
+    data_entrega = Column(Date, nullable=True)  # Data de entrega (será preenchida quando status for "delivered")
     
     vehicle = relationship("Vehicle", back_populates="deliveries")
     product = relationship("Product", back_populates="deliveries")

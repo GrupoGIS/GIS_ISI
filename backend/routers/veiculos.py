@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update
+from sqlalchemy.orm import joinedload, selectinload
 import sys
+from typing import List
 from database import get_db
 from .auth import get_current_user, is_employee
 sys.path.append("backend")
@@ -41,13 +43,31 @@ async def create_vehicle(
     return new_vehicle
 
 # Rota para obter todos os veículos
-@router.get("/vehicles/", response_model=list[schemas.Vehicle], dependencies=[Depends(is_employee)])
-async def get_all_vehicles(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(models.Vehicle).offset(skip).limit(limit))
-    vehicles = result.scalars().all()
-    if not vehicles:
-        raise HTTPException(status_code=404, detail="Nenhum veículo encontrado.")
+#@router.get("/vehicles/", response_model=list[schemas.Vehicle], dependencies=[Depends(is_employee)])
+#async def get_all_vehicles(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
+#    result = await db.execute(
+#        select(models.Vehicle)
+#        .options(selectinload(models.Vehicle.location))  # Carregar a relação 'localizacao'
+#        .offset(skip)
+#        .limit(limit)
+#    )
+#    vehicles = result.scalars().all()
+#
+#    if not vehicles:
+#        raise HTTPException(status_code=404, detail="Nenhum veículo encontrado.")
+#
+#    return vehicles
+
+@router.get("/vehicles", response_model=List[schemas.Vehicle])
+async def get_all_vehicles(db: AsyncSession = Depends(get_db)):
+    """
+    Retorna todos os veículos cadastrados no banco de dados.
+    """
+    query = select(models.Vehicle)  # Cria a consulta para selecionar todos os veículos
+    result = await db.execute(query)  # Executa a consulta de forma assíncrona
+    vehicles = result.scalars().all()  # Extrai os resultados
     return vehicles
+
 
 # Rota para obter um veículo pelo ID
 @router.get("/vehicle/{vehicle_id}", response_model=schemas.Vehicle, dependencies=[Depends(is_employee)])
