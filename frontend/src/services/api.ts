@@ -2,6 +2,9 @@ import axios from 'axios'
 
 const API = axios.create({
   baseURL: 'http://localhost:8000',
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  },
 })
 
 export interface User {
@@ -147,17 +150,21 @@ export interface Vehicle {
 
 // Login do usuário
 interface LoginResponse {
-  token: string
-  role: 'admin' | 'client' | 'driver' // Ajuste conforme necessário
+  access_token: string
+  token_type: 'bearer'
+  user_type: {
+    is_client: boolean
+    is_driver: boolean
+    is_employee: boolean
+  }
 }
 
 export const loginUser = async (
   email: string,
   password: string
 ): Promise<LoginResponse> => {
-  const response = await API.post<LoginResponse>('/auth/login', {
-    email,
-    password,
+  const response = await API.post<LoginResponse>('/auth/login', null, {
+    params: { email, password },
   })
   return response.data
 }
@@ -166,7 +173,7 @@ export const loginUser = async (
 export const registerClient = async (
   data: RegisterClientData
 ): Promise<Client> => {
-  const response = await API.post<Client>('/clients', data)
+  const response = await API.post<Client>('/create_clients', data)
   return response.data
 }
 
@@ -195,7 +202,7 @@ export const registerDistributionPoint = async (
   pointData: RegisterDistributionPointData
 ): Promise<DistributionPoint> => {
   const response = await API.post<DistributionPoint>(
-    '/distribution-points',
+    '/create_distribution_point',
     pointData
   )
   return response.data
@@ -205,7 +212,7 @@ export const registerDistributionPoint = async (
 export const fetchDistributionPoints = async (): Promise<
   DistributionPoint[]
 > => {
-  const response = await API.get<DistributionPoint[]>('/distribution-points')
+  const response = await API.get<DistributionPoint[]>('/distribution_points')
   return response.data
 }
 

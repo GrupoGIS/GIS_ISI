@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom'
 
 import Login from '@/pages/login'
+import Adm from '@/pages/admin'
 import RegisterClient from '@/pages/admin/register-client'
 import RegisterVehicle from '@/pages/admin/register-vehicle'
 import RegisterProduct from '@/pages/admin/register-product'
@@ -22,6 +23,14 @@ const AppRouter: React.FC = () => (
       <Route path="/login" element={<Login />} />
 
       {/* Admin Routes */}
+      <Route
+        path="/adm"
+        element={
+          <PrivateRoute role="admin">
+            <Adm />
+          </PrivateRoute>
+        }
+      />
       <Route
         path="/adm/register/client"
         element={

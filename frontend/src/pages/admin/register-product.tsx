@@ -25,6 +25,8 @@ import {
   RegisterProductData,
   RegisterDistributionPointData,
   Client,
+  DistributionPoint,
+  fetchDistributionPoints,
 } from '@/services/api'
 
 import { Autocomplete } from '@/components/autocomplete'
@@ -102,8 +104,9 @@ interface RegisterProductFormData {
 const RegisterProduct: React.FC = () => {
   const navigate = useNavigate()
   const [clients, setClients] = useState<Client[]>([])
-  const [showNewDistributionPointForm, setShowNewDistributionPointForm] =
-    useState(false)
+  const [distributionPoints, setDistributionPoints] = useState<
+    DistributionPoint[]
+  >([])
 
   const {
     register,
@@ -120,7 +123,7 @@ const RegisterProduct: React.FC = () => {
       let fk_id_ponto_distribuicao = data.fk_id_ponto_distribuicao
 
       // Se estiver cadastrando um novo ponto de distribuição
-      if (showNewDistributionPointForm && data.novoPontoDistribuicao) {
+      if (data.novoPontoDistribuicao) {
         const newPointData: RegisterDistributionPointData = {
           nome: data.novoPontoDistribuicao.nome,
           tipo: data.novoPontoDistribuicao.tipo,
@@ -149,11 +152,14 @@ const RegisterProduct: React.FC = () => {
   }
 
   useEffect(() => {
-    // Buscar clientes ao montar o componente
+    // Buscar clientes e pontos de distribuição ao montar o componente
     const fetchData = async () => {
       try {
-        const clientsResponse = await fetchClients()
+        const [clientsResponse, distributionPointsResponse] = await Promise.all(
+          [fetchClients(), fetchDistributionPoints()]
+        )
         setClients(clientsResponse)
+        setDistributionPoints(distributionPointsResponse)
       } catch (error) {
         console.error(error)
       }
@@ -274,9 +280,6 @@ const RegisterProduct: React.FC = () => {
                   <SelectValue placeholder="" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={'123'} value={String('teste')}>
-                    Cliente Teste
-                  </SelectItem>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={String(client.id)}>
                       {client.nome}
@@ -306,13 +309,13 @@ const RegisterProduct: React.FC = () => {
                 <TabsContent value="select">
                   <div>
                     <Select
-                      id="fk_id_cliente"
+                      id="fk_id_ponto_distribuicao"
                       onValueChange={(value) =>
-                        setValue('fk_id_cliente', Number(value))
+                        setValue('fk_id_ponto_distribuicao', Number(value))
                       }
                       value={
-                        watch('fk_id_cliente')
-                          ? String(watch('fk_id_cliente'))
+                        watch('fk_id_ponto_distribuicao')
+                          ? String(watch('fk_id_ponto_distribuicao'))
                           : ''
                       }
                     >
@@ -324,12 +327,12 @@ const RegisterProduct: React.FC = () => {
                         <SelectValue placeholder="" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem key={'123'} value={String('teste')}>
-                          Cliente Teste
-                        </SelectItem>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={String(client.id)}>
-                            {client.nome}
+                        {distributionPoints.map((distributionPoint) => (
+                          <SelectItem
+                            key={distributionPoint.id}
+                            value={String(distributionPoint.id)}
+                          >
+                            {distributionPoint.nome}
                           </SelectItem>
                         ))}
                       </SelectContent>
