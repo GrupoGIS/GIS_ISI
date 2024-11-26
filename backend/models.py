@@ -169,14 +169,3 @@ class Report(Base):
     
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    
-class ReportResponse(BaseModel):
-    id: int
-    tempo_tomado: float
-    tempo_estimado: float
-    diferenca: float
-    is_warning: bool
-    delivery_id: int
-
-    class Config:
-        orm_mode = True
