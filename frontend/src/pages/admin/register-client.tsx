@@ -12,7 +12,6 @@ import { Card } from '@/components/ui/card'
 import { registerClient, RegisterClientData } from '@/services/api'
 
 import { Autocomplete } from '@/components/autocomplete'
-import { Separator } from '@/components/ui/separator'
 
 const clientSchema = yup
   .object()
@@ -104,7 +103,7 @@ const RegisterClient: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-2xl p-8 m-12">
-        <h1 className="text-3xl font-bold mb-8">Registrar cliente</h1>
+        <h1 className="text-3xl font-bold mb-8">Registrar Cliente</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -146,7 +145,6 @@ const RegisterClient: React.FC = () => {
                 </p>
               )}
             </div>
-            <Separator className="col-span-2" />
             <div>
               <Label htmlFor="email">Email</Label>
               <Input

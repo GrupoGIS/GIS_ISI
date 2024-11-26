@@ -67,8 +67,7 @@ export const Autocomplete: React.FC<Props> = ({ className, onPlaceSelect }) => {
       const request: google.maps.places.AutocompleteRequest = {
         input: inputValue,
         sessionToken,
-        componentRestrictions: { country: 'br' },
-        types: ['address'],
+        language: 'pt-BR',
       }
 
       autocompleteService.getPlacePredictions(
@@ -102,7 +101,7 @@ export const Autocomplete: React.FC<Props> = ({ className, onPlaceSelect }) => {
 
       const detailRequestOptions: google.maps.places.PlaceDetailsRequest = {
         placeId,
-        fields: ['address_components', 'formatted_address'],
+        fields: ['address_components', 'formatted_address', 'geometry'],
         sessionToken,
       }
 

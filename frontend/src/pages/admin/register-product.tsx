@@ -47,38 +47,16 @@ const productSchema = yup
       .number()
       .typeError('Selecione um cliente')
       .required('O cliente é obrigatório'),
-    novoPontoDistribuicao: yup
-      .object({
-        nome: yup.string().required('O nome do ponto é obrigatório'),
-        tipo: yup.string().required('O tipo é obrigatório'),
-        end_rua: yup.string(),
-        end_bairro: yup.string(),
-        end_numero: yup.number(),
-        endereco: yup.string(), // Campo virtual para exibir erros do endereço
-      })
-      .test('address', '', function (value) {
-        const { end_rua, end_bairro, end_numero } = value || {}
-        const hasAnyAddressField = end_rua || end_bairro || end_numero
-        if (!hasAnyAddressField) {
-          return this.createError({
-            path: 'novoPontoDistribuicao.endereco',
-            message: 'Endereço é obrigatório',
-          })
-        }
-        const missingFields = []
-        if (!end_rua) missingFields.push('rua')
-        if (!end_bairro) missingFields.push('bairro')
-        if (!end_numero) missingFields.push('número')
-        if (missingFields.length > 0) {
-          return this.createError({
-            path: 'novoPontoDistribuicao.endereco',
-            message: `O endereço deve conter ${missingFields.join(', ')}`,
-          })
-        }
-        return true
-      })
-      .nullable()
-      .default(undefined),
+    // Make conditionally required fields optional
+    fk_id_ponto_distribuicao: yup.number(),
+    novoPontoDistribuicao: yup.object().shape({
+      nome: yup.string(),
+      tipo: yup.string(),
+      end_rua: yup.string(),
+      end_bairro: yup.string(),
+      end_numero: yup.number(),
+      endereco: yup.string(),
+    }),
   })
   .required()
 
@@ -88,7 +66,7 @@ interface NovoPontoDistribuicaoFormData {
   end_rua?: string
   end_bairro?: string
   end_numero?: number
-  endereco?: string // Campo virtual para exibir erros do endereço
+  endereco?: string // Virtual field for displaying address errors
 }
 
 interface RegisterProductFormData {
@@ -107,12 +85,14 @@ const RegisterProduct: React.FC = () => {
   const [distributionPoints, setDistributionPoints] = useState<
     DistributionPoint[]
   >([])
+  const [selectedTab, setSelectedTab] = useState('select')
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<RegisterProductFormData>({
     resolver: yupResolver(productSchema),
@@ -120,10 +100,48 @@ const RegisterProduct: React.FC = () => {
 
   const onSubmit: SubmitHandler<RegisterProductFormData> = async (data) => {
     try {
+      // Manually validate required fields based on selectedTab
+      if (selectedTab === 'select') {
+        if (!data.fk_id_ponto_distribuicao) {
+          setError('fk_id_ponto_distribuicao', {
+            type: 'manual',
+            message: 'O ponto de distribuição é obrigatório',
+          })
+          return
+        }
+      } else if (selectedTab === 'new') {
+        if (!data.novoPontoDistribuicao?.nome) {
+          setError('novoPontoDistribuicao.nome', {
+            type: 'manual',
+            message: 'O nome é obrigatório',
+          })
+        }
+        if (!data.novoPontoDistribuicao?.tipo) {
+          setError('novoPontoDistribuicao.tipo', {
+            type: 'manual',
+            message: 'O tipo é obrigatório',
+          })
+        }
+        // Validate address fields
+        const { end_rua, end_bairro, end_numero } =
+          data.novoPontoDistribuicao || {}
+        if (!end_rua || !end_bairro || !end_numero) {
+          setError('novoPontoDistribuicao.endereco', {
+            type: 'manual',
+            message: 'O endereço deve conter rua, bairro e número',
+          })
+        }
+        // Check if any errors were set
+        if (Object.keys(errors).length > 0) {
+          return
+        }
+      }
+
+      // Proceed with form submission
       let fk_id_ponto_distribuicao = data.fk_id_ponto_distribuicao
 
-      // Se estiver cadastrando um novo ponto de distribuição
-      if (data.novoPontoDistribuicao) {
+      // Register new distribution point if needed
+      if (selectedTab === 'new' && data.novoPontoDistribuicao) {
         const newPointData: RegisterDistributionPointData = {
           nome: data.novoPontoDistribuicao.nome,
           tipo: data.novoPontoDistribuicao.tipo,
@@ -152,7 +170,7 @@ const RegisterProduct: React.FC = () => {
   }
 
   useEffect(() => {
-    // Buscar clientes e pontos de distribuição ao montar o componente
+    // Fetch clients and distribution points when component mounts
     const fetchData = async () => {
       try {
         const [clientsResponse, distributionPointsResponse] = await Promise.all(
@@ -169,7 +187,7 @@ const RegisterProduct: React.FC = () => {
 
   const handlePlaceSelect = (place: google.maps.places.PlaceResult | null) => {
     if (place) {
-      // Limpar campos anteriores
+      // Clear previous address fields
       setValue('novoPontoDistribuicao.end_rua', '')
       setValue('novoPontoDistribuicao.end_bairro', '')
       setValue('novoPontoDistribuicao.end_numero', undefined)
@@ -193,7 +211,7 @@ const RegisterProduct: React.FC = () => {
         }
       })
     } else {
-      // Se nenhum lugar foi selecionado, limpar campos de endereço
+      // Clear address fields if no place selected
       setValue('novoPontoDistribuicao.end_rua', '')
       setValue('novoPontoDistribuicao.end_bairro', '')
       setValue('novoPontoDistribuicao.end_numero', undefined)
@@ -206,6 +224,7 @@ const RegisterProduct: React.FC = () => {
         <h1 className="text-3xl font-bold mb-8">Registrar Produto</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Product fields */}
             <div>
               <Label htmlFor="nome">Nome</Label>
               <Input
@@ -266,7 +285,6 @@ const RegisterProduct: React.FC = () => {
             <div>
               <Label htmlFor="fk_id_cliente">Cliente</Label>
               <Select
-                id="fk_id_cliente"
                 onValueChange={(value) =>
                   setValue('fk_id_cliente', Number(value))
                 }
@@ -275,7 +293,9 @@ const RegisterProduct: React.FC = () => {
                 }
               >
                 <SelectTrigger
-                  className={`mt-1 ${errors.nome ? 'border-red-500' : ''}`}
+                  className={`mt-1 ${
+                    errors.fk_id_cliente ? 'border-red-500' : ''
+                  }`}
                 >
                   <SelectValue placeholder="" />
                 </SelectTrigger>
@@ -297,7 +317,20 @@ const RegisterProduct: React.FC = () => {
               <h2 className="text-lg font-semibold mb-4">
                 Ponto de Distribuição
               </h2>
-              <Tabs defaultValue="select">
+              <Tabs
+                value={selectedTab}
+                onValueChange={(value) => {
+                  setSelectedTab(value)
+                  // Clear values when tab changes
+                  if (value === 'select') {
+                    setValue('fk_id_ponto_distribuicao', undefined)
+                    setValue('novoPontoDistribuicao', undefined)
+                  } else if (value === 'new') {
+                    setValue('fk_id_ponto_distribuicao', undefined)
+                    setValue('novoPontoDistribuicao', {})
+                  }
+                }}
+              >
                 <TabsList className="w-full">
                   <TabsTrigger value="select" className="w-full">
                     Existente
@@ -309,7 +342,6 @@ const RegisterProduct: React.FC = () => {
                 <TabsContent value="select">
                   <div>
                     <Select
-                      id="fk_id_ponto_distribuicao"
                       onValueChange={(value) =>
                         setValue('fk_id_ponto_distribuicao', Number(value))
                       }
@@ -321,7 +353,9 @@ const RegisterProduct: React.FC = () => {
                     >
                       <SelectTrigger
                         className={`mt-1 ${
-                          errors.nome ? 'border-red-500' : ''
+                          errors.fk_id_ponto_distribuicao
+                            ? 'border-red-500'
+                            : ''
                         }`}
                       >
                         <SelectValue placeholder="" />
@@ -337,9 +371,9 @@ const RegisterProduct: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.fk_id_cliente && (
+                    {errors.fk_id_ponto_distribuicao && (
                       <p className="text-red-500 text-sm mt-1">
-                        {errors.fk_id_cliente.message}
+                        {errors.fk_id_ponto_distribuicao.message}
                       </p>
                     )}
                   </div>
@@ -359,7 +393,7 @@ const RegisterProduct: React.FC = () => {
                       />
                       {errors.novoPontoDistribuicao?.nome && (
                         <p className="text-red-500 text-sm mt-1">
-                          {errors.novoPontoDistribuicao.nome?.message}
+                          {errors.novoPontoDistribuicao.nome.message}
                         </p>
                       )}
                     </div>
@@ -376,7 +410,7 @@ const RegisterProduct: React.FC = () => {
                       />
                       {errors.novoPontoDistribuicao?.tipo && (
                         <p className="text-red-500 text-sm mt-1">
-                          {errors.novoPontoDistribuicao.tipo?.message}
+                          {errors.novoPontoDistribuicao.tipo.message}
                         </p>
                       )}
                     </div>
