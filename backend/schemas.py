@@ -206,3 +206,6 @@ class Employee(EmployeeBase):
         orm_mode = True
         
 
+class VehicleUpdateRequest(BaseModel):
+    latitude: float
+    longitude: float
