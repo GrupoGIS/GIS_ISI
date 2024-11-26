@@ -16,21 +16,21 @@ async def create_route(route: schemas.RouteCreate, db: AsyncSession = Depends(ge
 
 # Endpoint to list all routes
 @router.get("/routes/", response_model=List[schemas.Route], dependencies=[Depends(is_employee)])
-def read_routes(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
-    routes = crud.get_routes(db, skip=skip, limit=limit)
+async def read_routes(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
+    routes = await crud.get_routes(db, skip=skip, limit=limit)
     return routes
 
 # Endpoint to get a specific route by its ID
 @router.get("/routes/{route_id}", response_model=schemas.Route, dependencies=[Depends(is_employee)])
-def read_route(route_id: int, db: AsyncSession = Depends(get_db)):
-    route = crud.get_route(db, route_id)
+async def read_route(route_id: int, db: AsyncSession = Depends(get_db)):
+    route = await crud.get_route(db, route_id)
     if route is None:
         raise HTTPException(status_code=404, detail="Route not found")
     return route
 
 # Endpoint to update a route
 @router.put("/routes/{route_id}", response_model=schemas.Route, dependencies=[Depends(is_employee)])
-def update_route(route_id: int, route: schemas.RouteUpdate, db: AsyncSession = Depends(get_db)):
+async def update_route(route_id: int, route: schemas.RouteUpdate, db: AsyncSession = Depends(get_db)):
     existing_route = db.query(Route).filter(Route.id == route_id).first()
     if not existing_route:
         return None

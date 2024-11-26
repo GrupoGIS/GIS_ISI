@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 import sys
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
 sys.path.append("backend")
+import crud 
 from database import get_db
 from models import Delivery, Vehicle, Product, DistributionPoint, Route, Client
 from schemas import DeliveryCreate, DeliveryResponse, DeliveryDetailsResponse
@@ -13,12 +16,19 @@ router = APIRouter()
 
 
 @router.post("/create_delivery", response_model=DeliveryResponse)
-async def create_delivery(delivery_data: DeliveryCreate, db: Session = Depends(get_db)):
+async def create_delivery(delivery_data: DeliveryCreate, db: AsyncSession = Depends(get_db)):
     # 1. Calcular a capacidade total necessária para a entrega
-    total_capacity_needed = sum([product.quantity for product in delivery_data.products])
+    product = await crud.get_product_by_id(db, delivery_data.fk_id_produto)
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+
+    total_capacity_needed = product.quantidade_estoque
 
     # 2. Buscar veículos disponíveis
-    available_vehicles = db.query(Vehicle).filter(Vehicle.is_available == True).all()
+    result = await db.execute(select(models.Vehicle).where(Vehicle.is_available == True))
+    available_vehicles = result.scalars().all()
 
     if not available_vehicles:
         raise HTTPException(status_code=404, detail="Nenhum veículo disponível")
@@ -53,13 +63,13 @@ async def create_delivery(delivery_data: DeliveryCreate, db: Session = Depends(g
     )
 
     db.add(new_delivery)
-    db.commit()
-    db.refresh(new_delivery)
+    await db.commit()
+    await db.refresh(new_delivery)
 
     # 5. Atualizar a entrega com o veículo mais próximo
     best_vehicle.is_available = False  # Marca o veículo como não disponível
     new_delivery.fk_id_veiculo = best_vehicle.id  # Associa o veículo à entrega
-    db.commit()
+    await db.commit()
 
     # Retorna a resposta da entrega
     return DeliveryResponse(
@@ -73,7 +83,7 @@ async def create_delivery(delivery_data: DeliveryCreate, db: Session = Depends(g
 
 
 @router.put("/update_delivery/{delivery_id}", response_model=DeliveryResponse)
-async def update_delivery_status(delivery_id: int, status: str, db: Session = Depends(get_db)):
+async def update_delivery_status(delivery_id: int, status: str, db: AsyncSession = Depends(get_db)):
     # Buscar a entrega no banco
     delivery = db.query(Delivery).filter(Delivery.id == delivery_id).first()
     
@@ -103,7 +113,7 @@ async def update_delivery_status(delivery_id: int, status: str, db: Session = De
 
 
 @router.get("/deliveries", response_model=List[DeliveryDetailsResponse])
-async def get_deliveries(user_role: str, user_id: int, db: Session = Depends(get_db)):
+async def get_deliveries(user_role: str, user_id: int, db: AsyncSession = Depends(get_db)):
     """
     Retorna entregas baseadas no papel do usuário.
     - user_role: 'motorista', 'cliente', ou 'funcionario'.

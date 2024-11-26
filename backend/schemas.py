@@ -140,7 +140,7 @@ class RouteBase(BaseModel):
     tempo_estimado: int
 
 class RouteCreate(RouteBase):
-    fk_id_entrega: int  # Não opcional para criar uma rota
+    fk_id_entrega: Optional[int]  # Não opcional para criar uma rota
 
 class Route(RouteBase):
     id: int
@@ -181,10 +181,10 @@ class ProductInDelivery(BaseModel):
     product_id: int
     quantity: int
 
-class DeliveryCreate(BaseModel):
-    origin_lat: float  
-    origin_lon: float  
-    products: List[ProductInDelivery]  
+#class DeliveryCreate(BaseModel):
+#    origin_lat: float  
+#    origin_lon: float  
+#    products: List[ProductInDelivery]  
     
 class DeliveryResponse(BaseModel):
     id: int

@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from fastapi import HTTPException, status
 import models
 from models import User
 from routers.auth import generate_salt
@@ -299,8 +300,21 @@ async def create_route(db: AsyncSession, route: schemas.RouteCreate):
 
 
 async def get_routes(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(models.Rota).offset(skip).limit(limit))
+    result = await db.execute(select(models.Route).offset(skip).limit(limit))
     return result.scalars().all()
+
+async def get_route(db: AsyncSession, route_id: int):
+    # Executa uma consulta para buscar a rota pelo ID
+    result = await db.execute(select(models.Route).filter(models.Route.id == route_id))
+    route = result.scalar_one_or_none()  # Retorna uma única rota ou None
+    
+    if not route:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Route with id {route_id} not found"
+        )
+    
+    return route
 
 def update_route(db: AsyncSession, route_id: int, route: schemas.RouteUpdate):
     existing_route = db.query(models.Route).filter(models.Route.id == route_id).first()

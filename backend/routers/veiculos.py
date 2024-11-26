@@ -21,7 +21,7 @@ async def create_vehicle(
     current_user: dict = Depends(get_current_user),
 ):
     # Cria a localização do veículo
-    location_data = vehicle.location.dict()
+    location_data = vehicle.fk_id_localizacao.dict()
     if isinstance(location_data.get("data_hora"), str):
         location_data["data_hora"] = datetime.strptime(location_data["data_hora"], "%Y-%m-%d").date()
     location = models.VehicleLocation(**location_data)
