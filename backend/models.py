@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "Usuario"
@@ -119,6 +120,11 @@ class Delivery(Base):
     status = Column(String, default="pending")  # Exemplo: "pending", "in_progress", "delivered"
     is_delivered = Column(Boolean, default=False)
     
+    # Colunas de data
+    data_criacao = Column(DateTime, default=datetime.utcnow)  # Data da criação
+    data_entrega = Column(DateTime, nullable=True)  # Data de entrega (será preenchida quando status for "delivered")
+
+    # Relacionamentos
     vehicle = relationship("Vehicle", back_populates="deliveries")
     product = relationship("Product", back_populates="deliveries")
     distribution_point = relationship("DistributionPoint", back_populates="deliveries")

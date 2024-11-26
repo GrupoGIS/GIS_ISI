@@ -4,8 +4,10 @@ from backend.database import get_db
 from backend.models import Delivery, Vehicle, Product
 from backend.schemas import DeliveryCreate, DeliveryResponse
 from geopy.distance import geodesic
+from datetime import datetime
 
 router = APIRouter()
+
 
 @router.post("/create_delivery", response_model=DeliveryResponse)
 async def create_delivery(delivery_data: DeliveryCreate, db: Session = Depends(get_db)):
@@ -64,3 +66,34 @@ async def create_delivery(delivery_data: DeliveryCreate, db: Session = Depends(g
         total_capacity_needed=total_capacity_needed, 
         vehicle=best_vehicle
     )
+
+
+
+@router.put("/update_delivery/{delivery_id}", response_model=DeliveryResponse)
+async def update_delivery_status(delivery_id: int, status: str, db: Session = Depends(get_db)):
+    # Buscar a entrega no banco
+    delivery = db.query(Delivery).filter(Delivery.id == delivery_id).first()
+    
+    if not delivery:
+        raise HTTPException(status_code=404, detail="Entrega não encontrada")
+
+    # Atualizar o status
+    delivery.status = status
+    
+    # Se o status for "delivered", atualizar a data_entrega
+    if status == "delivered" and not delivery.data_entrega:
+        delivery.data_entrega = datetime.utcnow()  # Preenche a data de entrega com a hora atual
+    
+    db.commit()
+    db.refresh(delivery)
+    
+    return DeliveryResponse(
+        id=delivery.id,
+        status=delivery.status,
+        fk_id_veiculo=delivery.fk_id_veiculo,
+        fk_id_produto=delivery.fk_id_produto,
+        fk_id_ponto_entrega=delivery.fk_id_ponto_entrega,
+        data_criacao=delivery.data_criacao,
+        data_entrega=delivery.data_entrega
+    )
+
