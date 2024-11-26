@@ -13,3 +13,4 @@ uuid
 geopy
 datetime
 typing
+pytest
