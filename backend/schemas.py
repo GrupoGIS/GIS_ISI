@@ -164,6 +164,26 @@ class Delivery(DeliveryBase):
 
     class Config:
         orm_mode = True
+        
+
+class ProductInDelivery(BaseModel):
+    product_id: int
+    quantity: int
+
+class DeliveryCreate(BaseModel):
+    origin_lat: float  
+    origin_lon: float  
+    products: List[ProductInDelivery]  
+    
+class DeliveryResponse(BaseModel):
+    id: int
+    status: str
+    fk_id_veiculo: Optional[int]
+    total_capacity_needed: int
+    vehicle: Optional["Vehicle"]
+
+    class Config:
+        orm_mode = True
 
 
 # Esquemas para a entidade Employee (Funcionario)
@@ -184,3 +204,5 @@ class Employee(EmployeeBase):
 
     class Config:
         orm_mode = True
+        
+

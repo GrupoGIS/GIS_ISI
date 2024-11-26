@@ -137,3 +137,12 @@ class Employee(Base):
     fk_id_usuario = Column(Integer, ForeignKey("Usuario.id"))
 
     user = relationship("User", back_populates="employees")
+
+class VehicleLocation(Base):
+    __tablename__ = "VehicleLocation"
+
+    id = Column(Integer, primary_key=True, index=True)
+    latitude = Column(Float)
+    longitude = Column(Float)
+
+    vehicle = relationship("Vehicle", back_populates="location")

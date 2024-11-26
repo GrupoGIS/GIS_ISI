@@ -159,16 +159,37 @@ async def get_vehicles(db: AsyncSession, skip: int = 0, limit: int = 10):
     return result.scalars().all()
 
 # Cadastro de Motoristas
-async def create_driver(db: AsyncSession, driver: schemas.DriverCreate):
-    db_driver = models.Driver(**driver.dict(exclude={"vehicle"}))
-    if driver.vehicle:
-        vehicle = await db.get(models.Vehicle, driver.vehicle.id)
-        if vehicle:
-            db_driver.vehicle = vehicle
-    db.add(db_driver)
+async def create_driver(db: AsyncSession, driver: schemas.DriverCreate, user_data: schemas.UserBase):
+    new_user = models.User(
+        email=user_data.email,
+        is_client=False,
+        is_driver=True,
+        is_employee=False,
+        password_hash=user_data.password_hash, 
+        salt=user_data.salt,
+    )
+    db.add(new_user)
     await db.commit()
-    await db.refresh(db_driver)
-    return db_driver
+    await db.refresh(new_user)
+
+    # Cria o motorista associado
+    new_driver = models.Driver(
+        **driver.dict(),
+        fk_id_usuario=new_user.id
+    )
+    db.add(new_driver)
+    await db.commit()
+    await db.refresh(new_driver)
+
+    return new_driver
+
+async def get_available_drivers(db: AsyncSession):
+    result = await db.execute(
+        select(models.Driver)
+        .where(models.Driver.is_available == True)
+        .options(joinedload(models.Driver.user))
+    )
+    return result.scalars().all()
 
 async def get_drivers(db: AsyncSession, skip: int = 0, limit: int = 10):
     result = await db.execute(select(models.Motorista).offset(skip).limit(limit))
