@@ -14,6 +14,7 @@ import {
   registerVehicle,
   RegisterVehicleData,
   RegisterDriverData,
+  registerDriver,
 } from '@/services/api'
 
 const vehicleSchema = yup
@@ -28,6 +29,7 @@ const vehicleSchema = yup
       .object({
         nome: yup.string().required('O nome é obrigatório'),
         habilitacao: yup.string().required('A habilitação é obrigatória'),
+        telefone: yup.string().required('O telefone é obrigatório'),
         email: yup
           .string()
           .email('Email inválido')
@@ -66,6 +68,7 @@ const vehicleSchema = yup
 interface MotoristaFormData {
   nome: string
   habilitacao: string
+  telefone: string
   email: string
   senha: string
   end_rua?: string
@@ -83,6 +86,8 @@ interface RegisterVehicleFormData {
 
 const RegisterVehicle: React.FC = () => {
   const navigate = useNavigate()
+  const [location, setLocation] =
+    React.useState<google.maps.places.PlaceResult | null>(null)
 
   const {
     register,
@@ -95,27 +100,35 @@ const RegisterVehicle: React.FC = () => {
 
   const onSubmit: SubmitHandler<RegisterVehicleFormData> = async (data) => {
     try {
-      // Registrar o motorista
-      const driverData: RegisterDriverData = {
-        nome: data.motorista.nome,
-        habilitacao: data.motorista.habilitacao,
-        email: data.motorista.email,
-        senha: data.motorista.senha,
-        end_rua: data.motorista.end_rua || '',
-        end_bairro: data.motorista.end_bairro || '',
-        end_numero: data.motorista.end_numero || 0,
-      }
-      const registeredDriver = await registerVehicle(driverData)
-
+      console.log(location)
+      if (!location) return
       // Registrar o veículo com o ID do motorista
       const vehicleData: RegisterVehicleData = {
         modelo: data.modelo,
         placa: data.placa,
         capacidade: data.capacidade,
-        fk_id_motorista: registeredDriver.id,
+        fk_id_localizacao: {
+          latitude: location.geometry?.location?.lat(),
+          longitude: location.geometry?.location?.lng(),
+          data_hora: new Date().toISOString(),
+        },
       }
 
-      await registerVehicle(vehicleData)
+      const registeredVehicle = await registerVehicle(vehicleData)
+
+      // Registrar o motorista
+      const driverData: RegisterDriverData = {
+        nome: data.motorista.nome,
+        habilitacao: data.motorista.habilitacao,
+        telefone: data.motorista.telefone,
+        email: data.motorista.email,
+        password: data.motorista.senha,
+        end_rua: data.motorista.end_rua || '',
+        end_bairro: data.motorista.end_bairro || '',
+        end_numero: data.motorista.end_numero || 0,
+        fk_id_veiculo: registeredVehicle.id,
+      }
+      const registeredDriver = await registerDriver(driverData)
       navigate('/adm')
     } catch (error) {
       console.error(error)
@@ -128,6 +141,8 @@ const RegisterVehicle: React.FC = () => {
       setValue('motorista.end_rua', '')
       setValue('motorista.end_bairro', '')
       setValue('motorista.end_numero', undefined)
+
+      setLocation(place)
 
       place.address_components?.forEach((component) => {
         const types = component.types
@@ -155,7 +170,7 @@ const RegisterVehicle: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-3xl p-8 m-12">
-        <h1 className="text-3xl font-bold mb-8">Cadastrar Veículo</h1>
+        <h1 className="text-3xl font-bold mb-8">Registrar Veículo</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="col-span-2">
@@ -217,6 +232,21 @@ const RegisterVehicle: React.FC = () => {
                   )}
                 </div>
                 <div>
+                  <Label htmlFor="motorista.telefone">Telefone</Label>
+                  <Input
+                    id="motorista.telefone"
+                    {...register('motorista.telefone')}
+                    className={`mt-1 ${
+                      errors.motorista?.telefone ? 'border-red-500' : ''
+                    }`}
+                  />
+                  {errors.motorista?.telefone && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.motorista.telefone?.message}
+                    </p>
+                  )}
+                </div>
+                <div className="col-span-2">
                   <Label htmlFor="motorista.habilitacao">Habilitação</Label>
                   <Input
                     id="motorista.habilitacao"

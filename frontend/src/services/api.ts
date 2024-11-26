@@ -123,6 +123,11 @@ export interface RegisterDriverData {
   email: string
   telefone: string
   password: string
+  habilitacao: string
+  end_rua: string
+  end_bairro: string
+  end_numero: number
+  fk_id_veiculo: number
 }
 
 export interface RegisterVehicleData {
@@ -132,7 +137,6 @@ export interface RegisterVehicleData {
   placa: string
   latitude: number
   longitude: number
-  fk_id_motorista: number
 }
 
 export interface Vehicle {
@@ -187,7 +191,7 @@ export const fetchClients = async (): Promise<Client[]> => {
 export const registerProduct = async (
   productData: RegisterProductData
 ): Promise<Product> => {
-  const response = await API.post<Product>('/products', productData)
+  const response = await API.post<Product>('/create_product', productData)
   return response.data
 }
 
@@ -216,21 +220,24 @@ export const fetchDistributionPoints = async (): Promise<
   return response.data
 }
 
+// Registrar motorista
 export const registerDriver = async (
   data: RegisterDriverData
 ): Promise<Driver> => {
-  const response = await axios.post<Driver>('/api/drivers', data)
+  const response = await API.post<Driver>('/create_driver', data)
   return response.data
 }
 
+// Buscar motoristas
 export const fetchDrivers = async (): Promise<Driver[]> => {
-  const response = await axios.get<Driver[]>('/api/drivers')
+  const response = await API.get<Driver[]>('/drivers')
   return response.data
 }
 
+// Registrar veículo
 export const registerVehicle = async (
   data: RegisterVehicleData
 ): Promise<Vehicle> => {
-  const response = await axios.post<Vehicle>('/api/vehicles', data)
+  const response = await API.post<Vehicle>('/create_vehicle', data)
   return response.data
 }
