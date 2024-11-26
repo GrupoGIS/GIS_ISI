@@ -17,8 +17,8 @@ jobs:
           python-version: "3.11"
       - name: install dependencies
         run: |
-          pip install --no-cache-dir -r ../../backend/requirements.txt
+          pip install --no-cache-dir -r backend/requirements.txt
 
       - name: Run tests
         run: |
-          pytest ../../backend/test.py --disable-warnings --maxfail=5
+          pytest backend/test.py --disable-warnings --maxfail=5
