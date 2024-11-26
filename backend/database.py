@@ -1,6 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.sql import text
+
 
 DATABASE_URL = "postgresql+asyncpg://user:password@db:5432/dbname"
 
@@ -23,9 +26,12 @@ async def get_db():
         finally:
             await session.close()
 
-def restart_db():
-    # Deleta todas as tabelas
-    Base.metadata.drop_all(bind=engine)
-    
-    # Cria novamente todas as tabelas
-    Base.metadata.create_all(bind=engine)
+async def drop_delivery_table(engine: AsyncEngine):
+    try:
+        # Drop apenas a tabela Delivery
+        async with engine.begin() as conn:
+            await conn.execute(text("DROP TABLE IF EXISTS \"Entrega\" CASCADE"))
+            # Substitua "Entrega" pelo nome exato da tabela no banco, respeitando o case sensitivity.
+    except Exception as e:
+        print(f"Error dropping Delivery table: {e}")
+        raise

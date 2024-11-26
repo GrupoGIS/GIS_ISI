@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.sql import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -6,6 +7,7 @@ from database import engine, Base, async_sessionmaker, get_db
 from routers import auth, products, clients, distribution, veiculos, driver, delivery, route
 from models import User
 from crud import create_user
+from database import drop_delivery_table
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -14,6 +16,9 @@ origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+DATABASE_URL = "postgresql+asyncpg://user:password@db:5432/dbname"
+
+engine = create_async_engine(DATABASE_URL, echo=True)
 
 async def create_tables():
     async with engine.begin() as conn:
@@ -57,6 +62,7 @@ app.include_router(route.router, tags=["Route"])
 @app.on_event("startup")
 async def startup_event():
     await create_tables()
+    # await drop_delivery_table(engine)
     await create_admin_user()
 
 @app.get("/")

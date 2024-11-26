@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 import sys
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +22,7 @@ router = APIRouter()
 async def create_delivery(delivery_data: DeliveryCreate, db: AsyncSession = Depends(get_db)):
     # 1. Buscar o produto e obter o cliente relacionado
     result = await db.execute(
-        select(Product).options(joinedload(Product.client)).where(Product.id == delivery_data.fk_id_produto)
+        select(Product).options(selectinload(Product.client)).where(Product.id == delivery_data.fk_id_produto)
     )
     product = result.scalars().first()
 
@@ -92,7 +92,7 @@ async def create_delivery(delivery_data: DeliveryCreate, db: AsyncSession = Depe
         status=new_delivery.status,
         fk_id_veiculo=best_vehicle.id,
         vehicle=best_vehicle,  # Incluindo o veículo completo no retorno
-        route=None,  # Se você deseja retornar uma rota, você deve definir logicamente o que é a 'rota'
+        route=None,  
         data_criacao=new_delivery.data_criacao,
         data_entrega=new_delivery.data_entrega  # O valor de 'data_entrega' será None, mas você pode preenchê-lo mais tarde
     )
