@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "Usuario"
@@ -48,7 +49,7 @@ class Vehicle(Base):
     __tablename__ = "Veiculo"
     
     id = Column(Integer, primary_key=True, index=True)
-    placa = Column(String, unique=True, index=True)
+    placa = Column(String, index=True)
     modelo = Column(String)
     capacidade = Column(Integer)
     fk_id_localizacao = Column(Integer, ForeignKey("LocalizacaoVeiculo.id"))
@@ -100,6 +101,8 @@ class Route(Base):
     __tablename__ = "Rota"
     
     id = Column(Integer, primary_key=True, index=True)
+    origem = Column(String, nullable=False)
+    destino = Column(String, nullable=False)
     distancia_km = Column(Float)
     tempo_estimado = Column(Integer)  
     fk_id_entrega = Column(Integer, ForeignKey("Entrega.id"))
@@ -115,6 +118,8 @@ class Delivery(Base):
     fk_id_ponto_entrega = Column(Integer, ForeignKey("PontoDistribuicao.id"))
     status = Column(String, default="pending")  # Exemplo: "pending", "in_progress", "delivered"
     is_delivered = Column(Boolean, default=False)
+    data_criacao = Column(DateTime, default=datetime.utcnow)  # Data da criação
+    data_entrega = Column(DateTime, nullable=True)  # Data de entrega (será preenchida quando status for "delivered")
     
     vehicle = relationship("Vehicle", back_populates="deliveries")
     product = relationship("Product", back_populates="deliveries")

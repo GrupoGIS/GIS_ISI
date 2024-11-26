@@ -5,7 +5,7 @@ from models import User
 from routers.auth import generate_salt
 import schemas
 from sqlalchemy.orm import joinedload, selectinload
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from passlib.context import CryptContext
 import uuid
 
@@ -167,20 +167,50 @@ async def create_vehicle(db: AsyncSession, vehicle: schemas.VehicleCreate):
 
 async def get_vehicle(db: AsyncSession, vehicle_id: int):
     result = await db.execute(
-        select(models.Vehicle)
-        .options(selectinload(models.Vehicle.deliveries)) 
-        .where(models.Vehicle.id == vehicle_id)
-    )
+    select(models.Vehicle)
+    .options(selectinload(models.Vehicle.deliveries))
+    .join(models.Driver)
+    .where(models.Driver.fk_id_usuario == current_user["id"])
+)
+
     vehicle = result.scalars().first()
     return vehicle
 
 # Cadastro de Motoristas
 async def create_driver(db: AsyncSession, driver: schemas.DriverCreate):
-    db_driver = models.Driver(**driver.dict(exclude={"vehicle"}))
-    if driver.vehicle:
-        vehicle = await db.get(models.Vehicle, driver.vehicle.id)
-        if vehicle:
-            db_driver.vehicle = vehicle
+    salt = str(uuid.uuid4()).replace("-", "")
+    new_user = models.User(
+        email=driver.email,
+        is_client=False,
+        is_driver=True,
+        is_employee=False,
+        password_hash=pwd_context.hash(driver.password + salt),
+        salt=salt,
+        )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+    user_id = new_user.id
+
+    # Criação do motorista associado
+    db_driver = models.Driver(
+        nome=driver.nome,
+        habilitacao=driver.habilitacao,
+        telefone=driver.telefone,
+        end_rua=driver.end_rua,
+        end_bairro=driver.end_bairro,
+        end_numero=driver.end_numero,
+        fk_id_veiculo=driver.fk_id_veiculo,
+        fk_id_usuario=user_id,
+    )
+
+    if driver.fk_id_veiculo:
+        vehicle = await db.get(models.Vehicle, driver.fk_id_veiculo)
+        if vehicle:  
+            db_driver.fk_id_veiculo = vehicle.id
+        else:
+            raise HTTPException(status_code=400, detail="Veículo não encontrado.")
+
     db.add(db_driver)
     await db.commit()
     await db.refresh(db_driver)
@@ -198,26 +228,36 @@ async def get_driver_by_id(db: AsyncSession, driver_id: int):
 
 # 4. Cadastro de Pontos de Distribuição
 async def create_distribution_point(db: AsyncSession, point: schemas.DistributionPointCreate):
-    db_point = models.PontoDistribuicao(**point.dict())
+    db_point = models.DistributionPoint(**point.dict())
     db.add(db_point)
     await db.commit()
     await db.refresh(db_point)
     return db_point
 
 async def get_distribution_points(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(models.PontoDistribuicao).offset(skip).limit(limit))
+    result = await db.execute(select(models.DistributionPoint).offset(skip).limit(limit))
     return result.scalars().all()
+
+async def get_distribution_point(db: AsyncSession, point_id: int):
+    try:
+        # Fazendo uma consulta para pegar o ponto de distribuição com o ID fornecido
+        result = await db.execute(select(models.DistributionPoint).filter(models.DistributionPoint.id == point_id))
+        point = result.scalar_one()
+        return point
+    except NoResultFound:
+        # Retorna None caso o ponto de distribuição não seja encontrado
+        return None
 
 # 5. Importação de Dados de Localização dos Veículos
 async def create_vehicle_location(db: AsyncSession, location: schemas.VehicleLocationCreate):
-    db_location = models.LocalizacaoVeiculo(**location.dict())
+    db_location = models.VehicleLocation(**location.dict())
     db.add(db_location)
     await db.commit()
     await db.refresh(db_location)
     return db_location
 
 async def get_vehicle_locations(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(models.LocalizacaoVeiculo).offset(skip).limit(limit))
+    result = await db.execute(select(models.VehicleLocation).offset(skip).limit(limit))
     return result.scalars().all()
 
 # 6. Seleção de Melhor Veículo para Realizar uma Entrega
@@ -234,33 +274,46 @@ async def select_best_vehicle_for_delivery(db: AsyncSession, delivery_id: int):
     return best_vehicles
 
 # 7. Geração de Rotas de Entrega
-async def create_route(db: AsyncSession, delivery_id: int, origin: str, destination: str):
-
-    google_route = await get_google_route(origin, destination)
-
-    # Criar a rota no banco de dados
+async def create_route(db: AsyncSession, route: schemas.RouteCreate):
+    # Criar a rota diretamente com os dados fornecidos
     db_route = models.Route(
-        origem=origin,
-        destino=destination,
-        distancia_m=google_route["distance"], 
-        tempo_estimado=google_route["duration"], 
+        origem=route.origem,
+        destino=route.destino,
+        distancia_km=route.distancia_km,
+        tempo_estimado=route.tempo_estimado,
     )
 
-    # Associar a rota à entrega
-    delivery = await db.get(models.Delivery, delivery_id)
+    # Associar a rota à entrega, se existir
+    delivery = await db.get(models.Delivery, route.fk_id_entrega)
     if delivery:
         db_route.delivery = delivery
     else:
-        raise Exception("Entrega não encontrada.")
+        raise HTTPException(status_code=404, detail="Entrega não encontrada.")
 
+    # Salvar no banco de dados
     db.add(db_route)
     await db.commit()
     await db.refresh(db_route)
+
     return db_route
+
 
 async def get_routes(db: AsyncSession, skip: int = 0, limit: int = 10):
     result = await db.execute(select(models.Rota).offset(skip).limit(limit))
     return result.scalars().all()
+
+def update_route(db: AsyncSession, route_id: int, route: schemas.RouteUpdate):
+    existing_route = db.query(models.Route).filter(models.Route.id == route_id).first()
+    if not existing_route:
+        return None
+
+    # Atualiza apenas os campos fornecidos
+    for key, value in route.dict(exclude_unset=True).items():
+        setattr(existing_route, key, value)
+
+    db.commit()
+    db.refresh(existing_route)
+    return existing_route
 
 # 8. Visualização Geográfica de Dados
 async def get_geographic_data(db: AsyncSession):

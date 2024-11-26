@@ -3,7 +3,7 @@ from sqlalchemy.sql import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import engine, Base, async_sessionmaker, get_db
-from routers import auth, products, clients, distribution, veiculos, driver
+from routers import auth, products, clients, distribution, veiculos, driver, delivery, route
 from models import User
 from crud import create_user
 import uvicorn
@@ -33,9 +33,11 @@ app = FastAPI()
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(products.router, tags=["Products"])
 app.include_router(clients.router, tags=["Clients"])
-# app.include_router(distribution.router, prefix="/distribution", tags=["Distribution"])
-app.include_router(veiculos.router, tags=["Veiculos"])
-app.include_router(driver.router, tags=["Motorista"])
+app.include_router(distribution.router, tags=["Distribution"])
+app.include_router(delivery.router, tags=["Delivery"])
+app.include_router(veiculos.router, tags=["Vehicle"])
+app.include_router(driver.router, tags=["Driver"])
+app.include_router(route.router, tags=["Route"])
 
 @app.on_event("startup")
 async def startup_event():

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 
 
 # Esquemas para a entidade Client (Cliente)
@@ -20,6 +20,23 @@ class Client(ClientBase):
     id: int
     fk_id_usuario: Optional[int]
     products: Optional[List["Product"]] = None  # Produtos associados
+
+    class Config:
+        orm_mode = True
+
+# Esquemas para a entidade DistributionPoint (PontoDistribuicao)
+class DistributionPointBase(BaseModel):
+    nome: str
+    end_rua: str
+    end_bairro: str
+    end_numero: int
+    tipo: str
+
+class DistributionPointCreate(DistributionPointBase):
+    pass
+
+class DistributionPoint(DistributionPointBase):
+    id: int
 
     class Config:
         orm_mode = True
@@ -50,12 +67,12 @@ class Product(ProductBase):
 class VehicleLocationBase(BaseModel):
     latitude: float
     longitude: float
-    data_hora: Optional[date]
+    data_hora: Optional[datetime]
 
 class VehicleLocationCreate(VehicleLocationBase):
     latitude: float
     longitude: float
-    data_hora: date 
+    data_hora: datetime 
 
 
 # Esquemas para a entidade Vehicle (Veiculo)
@@ -70,12 +87,11 @@ class VehicleCreate(VehicleBase):
     modelo: str
     capacidade: int
     is_available: Optional[bool] = True  # Disponível por padrão
-    location: VehicleLocationCreate
+    fk_id_localizacao: VehicleLocationCreate
 
 class Vehicle(VehicleBase):
     id: int
     fk_id_localizacao: int
-    deliveries: Optional[List["Delivery"]] = None  # Entregas associadas
 
     class Config:
         orm_mode = True
@@ -90,40 +106,23 @@ class DriverBase(BaseModel):
     end_numero: int
 
 class DriverCreate(DriverBase):
-    pass
+    email: str  
+    password: str 
+    fk_id_veiculo: Optional[int]
 
 class Driver(DriverBase):
     id: int
-    fk_id_usuario: Optional[int]
     fk_id_veiculo: Optional[int]
+    fk_id_usuario: Optional[int]
 
     class Config:
         orm_mode = True
-
-
-# Esquemas para a entidade DistributionPoint (PontoDistribuicao)
-class DistributionPointBase(BaseModel):
-    nome: str
-    end_rua: str
-    end_bairro: str
-    end_numero: int
-    tipo: str
-
-class DistributionPointCreate(DistributionPointBase):
-    pass
-
-class DistributionPoint(DistributionPointBase):
-    id: int
-
-    class Config:
-        orm_mode = True
-
 
 
 class VehicleLocationUpdate(BaseModel):
     latitude: Optional[float]
     longitude: Optional[float]
-    data_hora: Optional[date]
+    data_hora: Optional[datetime]
 
 class VehicleLocation(VehicleLocationBase):
     id: int
@@ -150,6 +149,15 @@ class Route(RouteBase):
     class Config:
         orm_mode = True
 
+class RouteUpdate(BaseModel):
+    origem: Optional[str] = None
+    destino: Optional[str] = None
+    distancia_km: Optional[float] = None
+    tempo_estimado: Optional[int] = None
+    fk_id_entrega: Optional[int] = None
+
+    class Config:
+        orm_mode = True
 
 # Esquemas para a entidade Delivery (Entrega)
 class DeliveryBase(BaseModel):
@@ -169,6 +177,24 @@ class Delivery(DeliveryBase):
     class Config:
         orm_mode = True
 
+class ProductInDelivery(BaseModel):
+    product_id: int
+    quantity: int
+
+class DeliveryCreate(BaseModel):
+    origin_lat: float  
+    origin_lon: float  
+    products: List[ProductInDelivery]  
+    
+class DeliveryResponse(BaseModel):
+    id: int
+    status: str
+    fk_id_veiculo: Optional[int]
+    total_capacity_needed: int
+    vehicle: Optional["Vehicle"]
+
+    class Config:
+        orm_mode = True
 
 # Esquemas para a entidade Employee (Funcionario)
 class EmployeeBase(BaseModel):
@@ -185,6 +211,33 @@ class EmployeeCreate(EmployeeBase):
 class Employee(EmployeeBase):
     id: int
     fk_id_usuario: Optional[int]
+
+    class Config:
+        orm_mode = True
+
+class VehicleUpdateRequest(BaseModel):
+    latitude: float
+    longitude: float
+    
+    
+class DeliveryDetailsResponse(BaseModel):
+    delivery_id: int
+    status: str
+    data_criacao: Optional[str]
+    data_entrega: Optional[str]
+    vehicle_id: Optional[int]
+    vehicle_plate: Optional[str]
+    vehicle_model: Optional[str]
+    product_name: Optional[str]
+    product_quantity: Optional[int]
+    distribution_point_name: Optional[str]
+    distribution_point_lat: Optional[float]
+    distribution_point_lon: Optional[float]
+    route_id: Optional[int]
+    route_description: Optional[str]
+    client_id: Optional[int]
+    client_name: Optional[str]
+    client_email: Optional[str]
 
     class Config:
         orm_mode = True

@@ -9,6 +9,7 @@ sys.path.append("backend")
 import crud
 import schemas
 import models
+from datetime import datetime
 
 router = APIRouter()
 
@@ -51,7 +52,11 @@ async def get_all_vehicles(skip: int = 0, limit: int = 10, db: AsyncSession = De
 # Rota para obter um veículo pelo ID
 @router.get("/vehicle/{vehicle_id}", response_model=schemas.Vehicle, dependencies=[Depends(is_employee)])
 async def get_vehicle_by_id(vehicle_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(models.Vehicle).where(models.Vehicle.id == vehicle_id))
+    result = await db.execute(
+        select(models.Vehicle)
+        .options(selectinload(models.Vehicle.deliveries))  # Carregar a relação deliveries de forma eficiente
+        .where(models.Vehicle.id == vehicle_id)
+    )
     vehicle = result.scalars().first()
     if not vehicle:
         raise HTTPException(status_code=404, detail="Veículo não encontrado.")
