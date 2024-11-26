@@ -246,3 +246,13 @@ class ReportResponse(BaseModel):
 
     class Config:
         orm_mode = True
+        
+        
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    role: str
+
+    class Config:
+        orm_mode = True
