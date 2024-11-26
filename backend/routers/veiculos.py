@@ -97,3 +97,20 @@ async def update_vehicle_location(
     await db.commit()
     await db.refresh(db_location)
     return db_location
+
+# Rota para o motorista visualizar o veículo associado
+@router.get("/driver/vehicle/", response_model=schemas.Vehicle, dependencies=[Depends(get_current_user)])
+async def get_driver_vehicle(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.get("is_driver"):
+        raise HTTPException(status_code=403, detail="Acesso permitido apenas para motoristas.")
+
+    result = await db.execute(
+        select(models.Vehicle).join(models.Driver).where(models.Driver.fk_id_usuario == current_user["id"])
+    )
+    vehicle = result.scalars().first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Nenhum veículo associado encontrado.")
+    return vehicle

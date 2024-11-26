@@ -55,7 +55,7 @@ class VehicleLocationBase(BaseModel):
 class VehicleLocationCreate(VehicleLocationBase):
     latitude: float
     longitude: float
-    data_hora: date
+    data_hora: date 
 
 
 # Esquemas para a entidade Vehicle (Veiculo)

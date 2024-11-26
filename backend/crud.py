@@ -187,8 +187,14 @@ async def create_driver(db: AsyncSession, driver: schemas.DriverCreate):
     return db_driver
 
 async def get_drivers(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(models.Motorista).offset(skip).limit(limit))
+    result = await db.execute(select(models.Driver).offset(skip).limit(limit))
     return result.scalars().all()
+
+async def get_driver_by_id(db: AsyncSession, driver_id: int):
+    result = await db.execute(
+        select(models.Driver).where(models.Driver.id == driver_id).options(selectinload(models.Driver.vehicle))
+    )
+    return result.scalars().first()
 
 # 4. Cadastro de Pontos de Distribuição
 async def create_distribution_point(db: AsyncSession, point: schemas.DistributionPointCreate):

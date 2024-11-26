@@ -3,7 +3,7 @@ from sqlalchemy.sql import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import engine, Base, async_sessionmaker, get_db
-from routers import auth, products, clients, distribution, veiculos
+from routers import auth, products, clients, distribution, veiculos, driver
 from models import User
 from crud import create_user
 import uvicorn
@@ -35,6 +35,7 @@ app.include_router(products.router, tags=["Products"])
 app.include_router(clients.router, tags=["Clients"])
 # app.include_router(distribution.router, prefix="/distribution", tags=["Distribution"])
 app.include_router(veiculos.router, tags=["Veiculos"])
+app.include_router(driver.router, tags=["Motorista"])
 
 @app.on_event("startup")
 async def startup_event():
