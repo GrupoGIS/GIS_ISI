@@ -201,3 +201,22 @@ async def get_delivery_reports(delivery_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Nenhum relatório encontrado para esta entrega")
 
     return reports
+
+
+
+@router.get("/reports", response_model=List[ReportResponse])
+async def get_reports(user_role: str, db: Session = Depends(get_db)):
+    """
+    Retorna todos os relatórios, mas apenas se o usuário for um funcionário.
+    - user_role: 'funcionario' para garantir que somente funcionários possam acessar.
+    """
+    if user_role != "funcionario":
+        raise HTTPException(status_code=403, detail="Acesso negado. Apenas funcionários podem visualizar os relatórios.")
+
+    # Consultar todos os relatórios no banco de dados
+    reports = db.query(Report).all()
+
+    if not reports:
+        raise HTTPException(status_code=404, detail="Nenhum relatório encontrado")
+
+    return reports
