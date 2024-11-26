@@ -6,7 +6,14 @@ from database import engine, Base, async_sessionmaker, get_db
 from routers import auth, products, clients, distribution, veiculos, driver
 from models import User
 from crud import create_user
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 async def create_tables():
     async with engine.begin() as conn:
@@ -29,6 +36,14 @@ async def create_admin_user():
             print("Usuário administrador já existe.")
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(products.router, tags=["Products"])
