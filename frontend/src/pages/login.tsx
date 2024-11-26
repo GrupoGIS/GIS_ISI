@@ -35,10 +35,15 @@ const Login: React.FC = () => {
     try {
       const response = await loginUser(data.email, data.password)
       // Armazena o token e os dados do usuário
-      localStorage.setItem('token', response.data.token)
-      localStorage.setItem('userRole', response.data.role)
+      localStorage.setItem('token', response.access_token)
+      const userType = response.user_type.is_client
+        ? 'client'
+        : response.user_type.is_driver
+        ? 'driver'
+        : 'admin'
+      localStorage.setItem('userType', userType)
       // Redireciona com base na função do usuário
-      switch (response.data.role) {
+      switch (userType) {
         case 'admin':
           navigate('/adm')
           break
@@ -53,7 +58,6 @@ const Login: React.FC = () => {
       }
     } catch (error) {
       console.error(error)
-      // Tratar erro de login (exibir mensagem de erro)
     }
   }
 

@@ -75,7 +75,17 @@ async def login(email: str, password: str, db: AsyncSession = Depends(get_db)):
         "is_driver": user.is_driver,
         "is_employee": user.is_employee
     })
-    return {"access_token": access_token, "token_type": "bearer"}
+    
+    # Retorna o token e o tipo de usuário
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_type": {
+            "is_client": user.is_client,
+            "is_driver": user.is_driver,
+            "is_employee": user.is_employee
+        }
+    }
 
 
 ## permissions

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
   SelectItem,
@@ -25,6 +25,8 @@ import {
   RegisterProductData,
   RegisterDistributionPointData,
   Client,
+  DistributionPoint,
+  fetchDistributionPoints,
 } from '@/services/api'
 
 import { Autocomplete } from '@/components/autocomplete'
@@ -102,8 +104,9 @@ interface RegisterProductFormData {
 const RegisterProduct: React.FC = () => {
   const navigate = useNavigate()
   const [clients, setClients] = useState<Client[]>([])
-  const [showNewDistributionPointForm, setShowNewDistributionPointForm] =
-    useState(false)
+  const [distributionPoints, setDistributionPoints] = useState<
+    DistributionPoint[]
+  >([])
 
   const {
     register,
@@ -120,7 +123,7 @@ const RegisterProduct: React.FC = () => {
       let fk_id_ponto_distribuicao = data.fk_id_ponto_distribuicao
 
       // Se estiver cadastrando um novo ponto de distribuição
-      if (showNewDistributionPointForm && data.novoPontoDistribuicao) {
+      if (data.novoPontoDistribuicao) {
         const newPointData: RegisterDistributionPointData = {
           nome: data.novoPontoDistribuicao.nome,
           tipo: data.novoPontoDistribuicao.tipo,
@@ -149,11 +152,14 @@ const RegisterProduct: React.FC = () => {
   }
 
   useEffect(() => {
-    // Buscar clientes ao montar o componente
+    // Buscar clientes e pontos de distribuição ao montar o componente
     const fetchData = async () => {
       try {
-        const clientsResponse = await fetchClients()
+        const [clientsResponse, distributionPointsResponse] = await Promise.all(
+          [fetchClients(), fetchDistributionPoints()]
+        )
         setClients(clientsResponse)
+        setDistributionPoints(distributionPointsResponse)
       } catch (error) {
         console.error(error)
       }
@@ -274,9 +280,6 @@ const RegisterProduct: React.FC = () => {
                   <SelectValue placeholder="" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem key={'123'} value={String('teste')}>
-                    Cliente Teste
-                  </SelectItem>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={String(client.id)}>
                       {client.nome}
@@ -290,59 +293,112 @@ const RegisterProduct: React.FC = () => {
                 </p>
               )}
             </div>
-            <Separator className="col-span-2" />
             <div className="col-span-2">
               <h2 className="text-lg font-semibold mb-4">
                 Ponto de Distribuição
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="novoPontoDistribuicao.nome">Nome</Label>
-                  <Input
-                    id="novoPontoDistribuicao.nome"
-                    {...register('novoPontoDistribuicao.nome')}
-                    className={`mt-1 ${
-                      errors.novoPontoDistribuicao?.nome ? 'border-red-500' : ''
-                    }`}
-                  />
-                  {errors.novoPontoDistribuicao?.nome && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.novoPontoDistribuicao.nome?.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="novoPontoDistribuicao.tipo">Tipo</Label>
-                  <Input
-                    id="novoPontoDistribuicao.tipo"
-                    {...register('novoPontoDistribuicao.tipo')}
-                    className={`mt-1 ${
-                      errors.novoPontoDistribuicao?.tipo ? 'border-red-500' : ''
-                    }`}
-                  />
-                  {errors.novoPontoDistribuicao?.tipo && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.novoPontoDistribuicao.tipo?.message}
-                    </p>
-                  )}
-                </div>
-                <div className="col-span-2">
-                  <Label>Endereço</Label>
-                  <Autocomplete
-                    className={`mt-1 ${
-                      errors.novoPontoDistribuicao?.endereco
-                        ? 'border-red-500'
-                        : ''
-                    }`}
-                    onPlaceSelect={handlePlaceSelect}
-                  />
-                  {errors.novoPontoDistribuicao?.endereco && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.novoPontoDistribuicao.endereco.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+              <Tabs defaultValue="select">
+                <TabsList className="w-full">
+                  <TabsTrigger value="select" className="w-full">
+                    Existente
+                  </TabsTrigger>
+                  <TabsTrigger value="new" className="w-full">
+                    Novo
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="select">
+                  <div>
+                    <Select
+                      id="fk_id_ponto_distribuicao"
+                      onValueChange={(value) =>
+                        setValue('fk_id_ponto_distribuicao', Number(value))
+                      }
+                      value={
+                        watch('fk_id_ponto_distribuicao')
+                          ? String(watch('fk_id_ponto_distribuicao'))
+                          : ''
+                      }
+                    >
+                      <SelectTrigger
+                        className={`mt-1 ${
+                          errors.nome ? 'border-red-500' : ''
+                        }`}
+                      >
+                        <SelectValue placeholder="" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {distributionPoints.map((distributionPoint) => (
+                          <SelectItem
+                            key={distributionPoint.id}
+                            value={String(distributionPoint.id)}
+                          >
+                            {distributionPoint.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.fk_id_cliente && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.fk_id_cliente.message}
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+                <TabsContent value="new">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="novoPontoDistribuicao.nome">Nome</Label>
+                      <Input
+                        id="novoPontoDistribuicao.nome"
+                        {...register('novoPontoDistribuicao.nome')}
+                        className={`mt-1 ${
+                          errors.novoPontoDistribuicao?.nome
+                            ? 'border-red-500'
+                            : ''
+                        }`}
+                      />
+                      {errors.novoPontoDistribuicao?.nome && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.novoPontoDistribuicao.nome?.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="novoPontoDistribuicao.tipo">Tipo</Label>
+                      <Input
+                        id="novoPontoDistribuicao.tipo"
+                        {...register('novoPontoDistribuicao.tipo')}
+                        className={`mt-1 ${
+                          errors.novoPontoDistribuicao?.tipo
+                            ? 'border-red-500'
+                            : ''
+                        }`}
+                      />
+                      {errors.novoPontoDistribuicao?.tipo && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.novoPontoDistribuicao.tipo?.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="col-span-2">
+                      <Label>Endereço</Label>
+                      <Autocomplete
+                        className={`mt-1 ${
+                          errors.novoPontoDistribuicao?.endereco
+                            ? 'border-red-500'
+                            : ''
+                        }`}
+                        onPlaceSelect={handlePlaceSelect}
+                      />
+                      {errors.novoPontoDistribuicao?.endereco && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.novoPontoDistribuicao.endereco.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
           <Button type="submit" disabled={isSubmitting} className="mt-8 w-full">

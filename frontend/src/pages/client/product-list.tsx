@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Truck, MapPin, Package } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,8 @@ import { fetchProducts, Product } from '@/services/api'
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fakeProducts: Product[] = [
@@ -258,14 +261,18 @@ const ProductList: React.FC = () => {
                         : 'outline'
                     }
                   >
-                    Status: {product.deliveries[0].status}
+                    {product.deliveries[0].status}
                   </Badge>
                   <Badge variant="secondary">
                     Quantidade: {product.quantidade_estoque}
                   </Badge>
                 </div>
               </div>
-              <Button variant="outline" className="mt-4 w-full">
+              <Button
+                variant="outline"
+                className="mt-4 w-full"
+                onClick={() => navigate(`/client/track/${product.id}`)}
+              >
                 Ver Detalhes
               </Button>
             </Card>

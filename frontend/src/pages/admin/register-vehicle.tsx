@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -8,14 +8,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Autocomplete } from '@/components/autocomplete'
 
 import {
   registerVehicle,
   RegisterVehicleData,
   RegisterDriverData,
-  Driver,
 } from '@/services/api'
 
 const vehicleSchema = yup
@@ -200,7 +198,6 @@ const RegisterVehicle: React.FC = () => {
                 </p>
               )}
             </div>
-            <Separator className="col-span-2" />
             <div className="col-span-2">
               <h2 className="text-lg font-semibold mb-4">Motorista</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
