@@ -1,11 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from backend.database import get_db
-from backend.models import Delivery, Vehicle, Product, DistributionPoint, Route, Client
-from backend.schemas import DeliveryCreate, DeliveryResponse, DeliveryDetailsResponse
+from backend.models import Delivery, Vehicle, Product, DistributionPoint, Route, Client, Report
+from backend.schemas import DeliveryCreate, DeliveryResponse, DeliveryDetailsResponse, ReportResponse, DeliveryUpdateRequest
 from geopy.distance import geodesic
 from datetime import datetime
 from typing import List
+from backend.services.delivery_service import generate_report
+
+
 
 router = APIRouter()
 
@@ -69,6 +72,21 @@ async def create_delivery(delivery_data: DeliveryCreate, db: Session = Depends(g
     )
 
 
+def generate_report(delivery: Delivery, tempo: float, kilometragem: float, quantidade_produto: int, db: Session):
+    # Cria um novo relatório para a entrega
+    report = Report(
+        delivery_id=delivery.id,
+        tempo=tempo,
+        kilometragem=kilometragem,
+        quantidade_produto=quantidade_produto
+    )
+    
+    # Adiciona o relatório ao banco de dados
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    
+    return report
 
 @router.put("/update_delivery/{delivery_id}", response_model=DeliveryResponse)
 async def update_delivery_status(delivery_id: int, status: str, db: Session = Depends(get_db)):
@@ -78,12 +96,17 @@ async def update_delivery_status(delivery_id: int, status: str, db: Session = De
     if not delivery:
         raise HTTPException(status_code=404, detail="Entrega não encontrada")
 
-    # Atualizar o status
+    # Atualizar o status da entrega
     delivery.status = status
     
-    # Se o status for "delivered", atualizar a data_entrega
-    if status == "delivered" and not delivery.data_entrega:
-        delivery.data_entrega = datetime.utcnow()  # Preenche a data de entrega com a hora atual
+    # Se o status for "done", gerar o relatório
+    if status == "done":
+        # Calcular tempo, kilometragem e quantidade de produto conforme sua lógica
+        tempo = 5.0  # Exemplo de tempo
+        kilometragem = 10.0  # Exemplo de kilometragem
+        quantidade_produto = 100  # Exemplo de quantidade de produto
+        
+        generate_report(delivery, tempo, kilometragem, quantidade_produto, db)
     
     db.commit()
     db.refresh(delivery)
@@ -97,7 +120,6 @@ async def update_delivery_status(delivery_id: int, status: str, db: Session = De
         data_criacao=delivery.data_criacao,
         data_entrega=delivery.data_entrega
     )
-
 
 
 @router.get("/deliveries", response_model=List[DeliveryDetailsResponse])

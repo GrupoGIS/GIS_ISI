@@ -119,16 +119,17 @@ class Delivery(Base):
     fk_id_ponto_entrega = Column(Integer, ForeignKey("PontoDistribuicao.id"))
     status = Column(String, default="pending")  # Exemplo: "pending", "in_progress", "delivered"
     is_delivered = Column(Boolean, default=False)
+    data_criacao = Column(DateTime, default=datetime.utcnow)  # Data de criação da entrega
+    data_entrega = Column(DateTime, nullable=True)  # Data de entrega
     
-    # Colunas de data
-    data_criacao = Column(DateTime, default=datetime.utcnow)  # Data da criação
-    data_entrega = Column(DateTime, nullable=True)  # Data de entrega (será preenchida quando status for "delivered")
-
-    # Relacionamentos
+    # Relacionamentos com outras tabelas
     vehicle = relationship("Vehicle", back_populates="deliveries")
     product = relationship("Product", back_populates="deliveries")
     distribution_point = relationship("DistributionPoint", back_populates="deliveries")
-    route = relationship("Route", back_populates="delivery")
+    client = relationship("Client", back_populates="deliveries")
+    
+    # Relacionamento com a tabela Report
+    reports = relationship("Report", back_populates="delivery")
 
 class Employee(Base):
     __tablename__ = "Funcionario"
@@ -152,3 +153,16 @@ class VehicleLocation(Base):
     longitude = Column(Float)
 
     vehicle = relationship("Vehicle", back_populates="location")
+
+class Report(Base):
+    __tablename__ = "Report"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    delivery_id = Column(Integer, ForeignKey("Entrega.id"))
+    tempo = Column(Float)  # Exemplo: tempo em horas ou minutos
+    kilometragem = Column(Float)  # Exemplo: distância percorrida em km
+    quantidade_produto = Column(Integer)  # Quantidade total de produto entregues
+    created_at = Column(DateTime, default=datetime.utcnow)  # Data e hora do relatório
+    
+    # Relacionamento com a tabela Delivery
+    delivery = relationship("Delivery", back_populates="reports")

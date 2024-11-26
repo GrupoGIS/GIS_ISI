@@ -232,3 +232,17 @@ class DeliveryDetailsResponse(BaseModel):
 
     class Config:
         orm_mode = True
+        
+class DeliveryUpdateRequest(BaseModel):
+    status: str
+
+class ReportResponse(BaseModel):
+    report_id: int
+    delivery_id: int
+    vehicle_id: int
+    time_taken: float  # Em horas
+    kilometers: float  # Distância percorrida
+    total_products: int
+
+    class Config:
+        orm_mode = True
