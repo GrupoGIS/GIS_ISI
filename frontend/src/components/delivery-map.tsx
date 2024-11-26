@@ -108,6 +108,12 @@ const Directions: React.FC<DirectionsProps> = ({
       .route({
         origin: delivery.rota.origin,
         destination: delivery.rota.destination,
+        waypoints: [
+          {
+            location: 'Piracicaba, SP',
+            stopover: false,
+          },
+        ],
         travelMode: google.maps.TravelMode.DRIVING,
         provideRouteAlternatives: true,
       })

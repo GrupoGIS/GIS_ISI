@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Truck, User, Package, MapPin } from 'lucide-react'
+import { Truck, User, Package, MapPin, Warehouse } from 'lucide-react'
 import DeliveryMap from '@/components/delivery-map'
 import { Button } from '@/components/ui/button'
 
@@ -49,14 +49,14 @@ const TrackDelivery: React.FC = () => {
         'Este é um produto de alta qualidade, fabricado com os melhores materiais disponíveis no mercado. Ideal para atender às necessidades dos clientes mais exigentes, oferecendo durabilidade e desempenho superiores.',
     },
     destino: 'Avenida Nações Unidas, 1, Bauru, SP',
-    origem: 'Rua XV de Novembro, 123, Centro, Curitiba, PR',
+    origem: 'São paulo, SP',
     delivery: {
       id: 1,
       status: 'Em trânsito',
       is_delivered: false,
     },
     rota: {
-      origin: 'Rua XV de Novembro, 123, Centro, Curitiba, PR',
+      origin: 'São paulo, SP',
       destination: 'Avenida Nações Unidas, 1, Bauru, SP',
     },
   }
@@ -64,7 +64,7 @@ const TrackDelivery: React.FC = () => {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 px-8 gap-6">
       {/* Map Section */}
-      <div className="w-full max-h-screen flex-1 sticky top-0 py-8">
+      <div className="w-full h-96 lg:h-auto max-h-screen flex-1 lg:sticky lg:top-0 lg:py-8">
         <DeliveryMap
           delivery={delivery}
           routeIndex={routeIndex}
@@ -157,6 +157,28 @@ const TrackDelivery: React.FC = () => {
             <div className="mb-3">
               <p className="text-gray-500 font-medium">Descrição</p>
               <p className="text-gray-800">{delivery.product.descricao}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Distribution Point Information Card */}
+        <Card className="p-6 mb-4 bg-white rounded-lg">
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-xl font-semibold">Ponto de distribuição</h2>
+            <Warehouse className="h-6 w-6 text-gray-600" />
+          </div>
+          <div>
+            <div className="mb-3">
+              <p className="text-gray-500 font-medium">Nome</p>
+              <p className="text-gray-800">{}</p>
+            </div>
+            <div className="mb-3">
+              <p className="text-gray-500 font-medium">Endereço</p>
+              <p className="text-gray-800">{delivery.destino}</p>
+            </div>
+            <div className="mb-3">
+              <p className="text-gray-500 font-medium">Tipo</p>
+              <p className="text-gray-800">{}</p>
             </div>
           </div>
         </Card>
