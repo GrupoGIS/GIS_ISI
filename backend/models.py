@@ -111,12 +111,12 @@ class Route(Base):
     delivery = relationship("Delivery", back_populates="route")
     
 class Delivery(Base):
-    __tablename__ = "Entrega"
+    __tablename__ = "entregas"
     
     id = Column(Integer, primary_key=True, index=True)
-    fk_id_veiculo = Column(Integer, ForeignKey("Veiculo.id"))
-    fk_id_produto = Column(Integer, ForeignKey("Produto.id"))
-    fk_id_ponto_entrega = Column(Integer, ForeignKey("PontoDistribuicao.id"))
+    fk_id_veiculo = Column(Integer, ForeignKey("veiculos.id"))
+    fk_id_produto = Column(Integer, ForeignKey("produtos.id"))
+    fk_id_ponto_entrega = Column(Integer, ForeignKey("pontos_distribuicao.id"))
     status = Column(String, default="pending")  # Exemplo: "pending", "in_progress", "delivered"
     is_delivered = Column(Boolean, default=False)
     data_criacao = Column(DateTime, default=datetime.utcnow)  # Data de criação da entrega
@@ -155,14 +155,28 @@ class VehicleLocation(Base):
     vehicle = relationship("Vehicle", back_populates="location")
 
 class Report(Base):
-    __tablename__ = "Report"
+    __tablename__ = "reports"
     
     id = Column(Integer, primary_key=True, index=True)
-    delivery_id = Column(Integer, ForeignKey("Entrega.id"))
-    tempo = Column(Float)  # Exemplo: tempo em horas ou minutos
-    kilometragem = Column(Float)  # Exemplo: distância percorrida em km
-    quantidade_produto = Column(Integer)  # Quantidade total de produto entregues
-    created_at = Column(DateTime, default=datetime.utcnow)  # Data e hora do relatório
-    
+    tempo_tomado = Column(Float, nullable=False)  # Tempo real que foi tomado para a entrega (em horas ou minutos)
+    tempo_estimado = Column(Float, nullable=False)  # Tempo estimado para a entrega (em horas ou minutos)
+    diferenca = Column(Float)  # Diferença entre tempo estimado e tempo tomado
+    is_warning = Column(Boolean, default=False)  # Flag para indicar se houve um problema com o tempo
+    delivery_id = Column(Integer, ForeignKey("entregas.id"), nullable=False)  # Chave estrangeira para a entrega
+
     # Relacionamento com a tabela Delivery
     delivery = relationship("Delivery", back_populates="reports")
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    
+class ReportResponse(BaseModel):
+    id: int
+    tempo_tomado: float
+    tempo_estimado: float
+    diferenca: float
+    is_warning: bool
+    delivery_id: int
+
+    class Config:
+        orm_mode = True

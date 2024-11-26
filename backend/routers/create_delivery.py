@@ -88,8 +88,32 @@ def generate_report(delivery: Delivery, tempo: float, kilometragem: float, quant
     
     return report
 
+
+def create_report(delivery: Delivery, tempo_tomado: float, tempo_estimado: float, db: Session):
+    # Calcular a diferença
+    diferenca = tempo_tomado - tempo_estimado
+
+    # Definir a flag de warning com base na diferença
+    is_warning = diferenca > (tempo_estimado * 0.2)  # Se a diferença for maior que 20% do tempo estimado, é um warning
+
+    # Criar o relatório
+    report = Report(
+        tempo_tomado=tempo_tomado,
+        tempo_estimado=tempo_estimado,
+        diferenca=diferenca,
+        is_warning=is_warning,
+        delivery_id=delivery.id
+    )
+    
+    # Adicionar o relatório ao banco de dados
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    
+    return report
+
 @router.put("/update_delivery/{delivery_id}", response_model=DeliveryResponse)
-async def update_delivery_status(delivery_id: int, status: str, db: Session = Depends(get_db)):
+async def update_delivery_status(delivery_id: int, status: str, tempo_tomado: float, tempo_estimado: float, db: Session = Depends(get_db)):
     # Buscar a entrega no banco
     delivery = db.query(Delivery).filter(Delivery.id == delivery_id).first()
     
@@ -99,14 +123,10 @@ async def update_delivery_status(delivery_id: int, status: str, db: Session = De
     # Atualizar o status da entrega
     delivery.status = status
     
-    # Se o status for "done", gerar o relatório
+    # Se o status for "done", criar o relatório
     if status == "done":
-        # Calcular tempo, kilometragem e quantidade de produto conforme sua lógica
-        tempo = 5.0  # Exemplo de tempo
-        kilometragem = 10.0  # Exemplo de kilometragem
-        quantidade_produto = 100  # Exemplo de quantidade de produto
-        
-        generate_report(delivery, tempo, kilometragem, quantidade_produto, db)
+        # Criar o relatório com os tempos fornecidos
+        create_report(delivery, tempo_tomado, tempo_estimado, db)
     
     db.commit()
     db.refresh(delivery)
@@ -171,3 +191,13 @@ async def get_deliveries(user_role: str, user_id: int, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Nenhuma entrega encontrada")
 
     return deliveries
+
+@router.get("/delivery_reports/{delivery_id}", response_model=List[ReportResponse])
+async def get_delivery_reports(delivery_id: int, db: Session = Depends(get_db)):
+    # Buscar relatórios associados à entrega
+    reports = db.query(Report).filter(Report.delivery_id == delivery_id).all()
+    
+    if not reports:
+        raise HTTPException(status_code=404, detail="Nenhum relatório encontrado para esta entrega")
+
+    return reports
