@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 import models
-from models import User
+from models import User, DistributionPoint
 from routers.auth import generate_salt
 import schemas
 from sqlalchemy.orm import joinedload, selectinload
@@ -268,3 +268,23 @@ async def get_delivered_products_map_data(db: AsyncSession):
         select(models.Entrega).filter(models.Entrega.is_delivered == True)
     )
     return result.scalars().all()
+
+
+
+async def create_product(db: AsyncSession, product: schemas.ProductCreate, client_id: int):
+    product_data = product.dict(exclude={"ponto_distribuicao"})
+    db_product = models.Product(**product_data, fk_id_cliente=client_id)
+    db.add(db_product)
+
+    # Cria e associa o ponto de distribuição, se fornecido
+    if product.ponto_distribuicao:
+        distribution_data = product.ponto_distribuicao.dict()
+        db_distribution_point = models.DistributionPoint(**distribution_data)
+        db.add(db_distribution_point)
+
+        # Associa o ponto de distribuição ao produto
+        db_product.deliveries.append(db_distribution_point)
+
+    await db.commit()
+    await db.refresh(db_product)
+    return db_product

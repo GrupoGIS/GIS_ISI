@@ -43,6 +43,8 @@ class Product(Base):
 
     client = relationship("Client", back_populates="products")
     deliveries = relationship("Delivery", back_populates="product")
+    distribution_points = relationship("DistributionPoint", back_populates="product")  # Relacionamento reverso
+
     
 class Vehicle(Base):
     __tablename__ = "Veiculo"
@@ -83,8 +85,9 @@ class DistributionPoint(Base):
     end_bairro = Column(String)
     end_numero = Column(Integer)
     tipo = Column(String)
+    fk_id_produto = Column(Integer, ForeignKey("Produto.id"))  
 
-    deliveries = relationship("Delivery", back_populates="distribution_point")
+    product = relationship("Product", back_populates="distribution_points")
     
 class VehicleLocation(Base):
     __tablename__ = "LocalizacaoVeiculo"

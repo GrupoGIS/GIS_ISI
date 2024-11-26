@@ -31,13 +31,22 @@ class ProductBase(BaseModel):
     descricao: str
     preco: int
     quantidade_estoque: int
+    
+class DistributionPointCreate(BaseModel):
+    nome: str
+    end_rua: str
+    end_bairro: str
+    end_numero: int
+    tipo: str
 
-class ProductCreate(ProductBase):
+class ProductCreate(BaseModel):
     nome: str
     descricao: str
     preco: int
     quantidade_estoque: int
     fk_id_cliente: int
+    ponto_distribuicao: DistributionPointCreate | None = None  
+
 
 class Product(ProductBase):
     id: int

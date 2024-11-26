@@ -17,14 +17,30 @@ async def create_product(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-
+    # Verifica se o cliente associado existe
     result = await db.execute(select(models.Client).where(models.Client.id == product.fk_id_cliente))
     client = result.scalars().first()
     if not client:
         raise HTTPException(status_code=404, detail="Cliente não encontrado.")
 
+    # Cria o produto
     created_product = await crud.create_product(db, product, product.fk_id_cliente)
+
+    # Cria um ponto de distribuição associado, se fornecido no payload
+    if product.ponto_distribuicao:
+        ponto_data = models.DistributionPoint(
+            nome=product.ponto_distribuicao.nome,
+            end_rua=product.ponto_distribuicao.end_rua,
+            end_bairro=product.ponto_distribuicao.end_bairro,
+            end_numero=product.ponto_distribuicao.end_numero,
+            tipo=product.ponto_distribuicao.tipo,
+        )
+        db.add(ponto_data)
+        await db.commit()
+
     return created_product
+
+
 
 # Rota para obter produtos do cliente autenticado
 @router.get("/products/my/", response_model=list[schemas.Product], dependencies=[Depends(is_client)])
