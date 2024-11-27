@@ -166,18 +166,18 @@ async def get_deliveries(user_role: str, user_id: int, db: AsyncSession = Depend
      .join(Client, Delivery.client_id == Client.id, isouter=True)
 
     # Filtrar dados com base no papel do usuário
-    if user_role == "motorista":
-        # Motorista vê entregas associadas ao veículo que ele está dirigindo
-        deliveries = query.filter(Vehicle.driver_id == user_id).all()
-    elif user_role == "cliente":
-        # Cliente vê apenas entregas associadas ao seu ID
-        deliveries = query.filter(Delivery.client_id == user_id).all()
-    elif user_role == "funcionario":
-        # Funcionário pode visualizar todas as entregas
-        deliveries = query.all()
-    else:
-        raise HTTPException(status_code=400, detail="Papel do usuário inválido")
-
+    #if user_role == "motorista":
+    #    # Motorista vê entregas associadas ao veículo que ele está dirigindo
+    #    deliveries = query.filter(Vehicle.driver_id == user_id).all()
+    #elif user_role == "cliente":
+    #    # Cliente vê apenas entregas associadas ao seu ID
+    #    deliveries = query.filter(Delivery.client_id == user_id).all()
+    #elif user_role == "funcionario":
+    #    # Funcionário pode visualizar todas as entregas
+    #    deliveries = query.all()
+    #else:
+    #    raise HTTPException(status_code=400, detail="Papel do usuário inválido")
+#
     if not deliveries:
         raise HTTPException(status_code=404, detail="Nenhuma entrega encontrada")
 
