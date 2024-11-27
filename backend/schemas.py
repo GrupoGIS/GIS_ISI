@@ -191,10 +191,10 @@ class ProductInDelivery(BaseModel):
     
 class DeliveryResponse(DeliveryBase):
     id: int
-    vehicle: Optional["Vehicle"]
-    route: Optional["Route"]
+    vehicle: Optional["Vehicle"] = None
+    route: Optional["Route"] = None
     data_criacao: datetime
-    data_entrega: Optional[datetime]
+    data_entrega: Optional[datetime] = None
     
     class Config:
         orm_mode = True

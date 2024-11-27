@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react'
-import { Truck, MapPin, Package } from 'lucide-react'
+import { Truck, MapPin, Package, AlertTriangle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 import { fetchProducts, Product } from '@/services/api'
 
@@ -121,6 +127,7 @@ const ProductList: React.FC = () => {
         // Sem motorista atribuído
         destino: 'Fortaleza, CE',
         descricao: 'Descrição breve do Produto G.',
+        auditWarning: 'Entrega levou mais tempo que o esperado',
         deliveries: [
           {
             id: 1,
@@ -235,7 +242,19 @@ const ProductList: React.FC = () => {
             <Card key={product.id} className="p-4">
               <div className="flex items-center mb-2">
                 <Package className="h-6 w-6 text-gray-600 mr-2" />
-                <h2 className="text-xl font-semibold">{product.nome}</h2>
+                <h2 className="flex-1 text-xl font-semibold">{product.nome}</h2>
+                {product?.auditWarning && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger className="right-0">
+                        <AlertTriangle className="text-yellow-600" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{product?.auditWarning}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
               <Separator />
               <div className="mt-4">
