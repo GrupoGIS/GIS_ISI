@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from app.models import Vehicle, VehicleLocation, Delivery
+from backend.models import Vehicle, VehicleLocation, Delivery
 
 # Teste de criação de um veículo
 def test_create_vehicle():

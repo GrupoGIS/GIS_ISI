@@ -134,7 +134,7 @@ async def update_delivery_status(delivery_id: int, status: str, db: AsyncSession
 
 
 @router.get("/deliveries", response_model=List[DeliveryDetailsResponse])
-async def get_deliveries(user_role: str, user_id: int, db: AsyncSession = Depends(get_db)):
+async def get_deliveries(db: AsyncSession = Depends(get_db)):
     """
     Retorna entregas baseadas no papel do usuário.
     - user_role: 'motorista', 'cliente', ou 'funcionario'.
