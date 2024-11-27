@@ -241,3 +241,9 @@ export const registerVehicle = async (
   const response = await API.post<Vehicle>('/create_vehicle', data)
   return response.data
 }
+
+// Create delivery
+export const createDelivery = async (data: any): Promise<Delivery> => {
+  const response = await API.post<Delivery>('/create_delivery', data)
+  return response.data
+}

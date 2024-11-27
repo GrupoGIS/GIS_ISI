@@ -27,6 +27,7 @@ import {
   Client,
   DistributionPoint,
   fetchDistributionPoints,
+  createDelivery,
 } from '@/services/api'
 
 import { Autocomplete } from '@/components/autocomplete'
@@ -162,10 +163,16 @@ const RegisterProduct: React.FC = () => {
         fk_id_ponto_distribuicao: fk_id_ponto_distribuicao,
       }
 
-      await registerProduct(productData)
+      const registeredProduct = await registerProduct(productData)
+
+      await createDelivery({
+        fk_id_produto: registeredProduct.id,
+        fk_id_ponto_entrega: fk_id_ponto_distribuicao,
+      })
       navigate('/adm')
     } catch (error) {
       console.error(error)
+      alert(error.message)
     }
   }
 
