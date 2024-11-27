@@ -22,4 +22,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest ../backend/test.py --disable-warnings --maxfail=5
+          pytest ./backend/test.py --disable-warnings --maxfail=5
+      - name: Run lint
+        run: |
+          flake8 ./backend
